@@ -1,5 +1,10 @@
 # R2 Media Sync
 
+[![GitHub Release](https://img.shields.io/github/v/release/fab34/cloudflare-media-sync?logo=github&color=blue)](https://github.com/fab34/cloudflare-media-sync/releases)
+[![Obsidian Version](https://img.shields.io/badge/Obsidian-v1.6.6+-purple?logo=obsidian)](https://obsidian.md/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![GitHub Issues](https://img.shields.io/github/issues/fab34/cloudflare-media-sync)](https://github.com/fab34/cloudflare-media-sync/issues)
+
 R2 Media Sync is an Obsidian plugin that automatically uploads local media assets referenced in Markdown notes to Cloudflare R2, rewrites the Markdown links to public R2 URLs, and optionally deletes the local files.
 
 It is designed for workflows where other tools create local image files inside your vault, such as PDF-to-Markdown converters, document importers, AI assistants, or batch import tools.
@@ -349,4 +354,4 @@ For multi-device setups, the safest pattern is:
 
 ## License
 
-[MIT](https://github.com/fab34/cloudflare-media-sync/blob/main/LICENSE) — 歡迎自由使用、修改、散布。Issue 與 PR 都歡迎。
+[MIT](https://github.com/fab34/cloudflare-media-sync/blob/main/LICENSE) — Feel free to use, modify, and distribute. Issues and PRs are welcome.
