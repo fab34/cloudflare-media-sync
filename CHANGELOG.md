@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.5
+
+- Raised the minimum app version to 1.13.0.
+- Switch settings tab layout back to official `getSettingDefinitions` API and use standard `update()` to satisfy reviewer request.
+
 ## 0.3.4
 
 - Fix: Replace settings tab `this.update()` with standard `this.display()` for older Obsidian version compatibility (down to `v1.6.6+`).

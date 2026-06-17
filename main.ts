@@ -7,6 +7,7 @@ import {
   PluginSettingTab,
   requestUrl,
   Setting,
+  SettingDefinitionItem,
   setIcon,
   TFile,
   TFolder,
@@ -1866,11 +1867,16 @@ class R2MediaSyncSettingTab extends PluginSettingTab {
     this.plugin = plugin;
   }
 
-  display(): void {
-    const { containerEl } = this;
-    containerEl.empty();
-    const settingsDiv = containerEl.createDiv({ cls: "r2-media-sync-settings" });
-    this.renderSettings(settingsDiv);
+  getSettingDefinitions(): SettingDefinitionItem[] {
+    return [{
+      name: "R2 Media Sync",
+      searchable: false,
+      render: (setting: Setting) => {
+        setting.settingEl.empty();
+        const containerEl = setting.settingEl.createDiv({ cls: "r2-media-sync-settings" });
+        this.renderSettings(containerEl);
+      },
+    }];
   }
 
   private renderSettings(containerEl: HTMLElement): void {
@@ -1887,7 +1893,7 @@ class R2MediaSyncSettingTab extends PluginSettingTab {
         .onChange(async (value: UiLanguage) => {
           this.plugin.settings.uiLanguage = value;
           await this.plugin.saveSettings();
-          this.display();
+          this.update();
         }));
 
     new Setting(containerEl)
@@ -1900,7 +1906,7 @@ class R2MediaSyncSettingTab extends PluginSettingTab {
         .onChange(async (value: ConfigSource) => {
           this.plugin.settings.configSource = value;
           await this.plugin.saveSettings();
-          this.display();
+          this.update();
         }));
 
     new Setting(containerEl)
@@ -1910,7 +1916,7 @@ class R2MediaSyncSettingTab extends PluginSettingTab {
         .setButtonText(this.plugin.t("importButton"))
         .onClick(async () => {
           await this.plugin.importEzImageSettings(true);
-          this.display();
+          this.update();
         }));
 
     if (this.plugin.settings.configSource === "manual") {
@@ -1939,7 +1945,7 @@ class R2MediaSyncSettingTab extends PluginSettingTab {
           if (value) {
             new Notice(`R2 Media Sync: ${this.plugin.t("deleteEnabledNotice")}`);
           }
-          this.display();
+          this.update();
         }));
 
     if (this.plugin.settings.deleteLocalAfterUpload) {
@@ -1953,7 +1959,7 @@ class R2MediaSyncSettingTab extends PluginSettingTab {
           .onChange(async (value: LocalCleanupMode) => {
             this.plugin.settings.localCleanupMode = value;
             await this.plugin.saveSettings();
-            this.display();
+            this.update();
           }));
 
       if (this.plugin.settings.localCleanupMode === "folder") {
@@ -2018,7 +2024,7 @@ class R2MediaSyncSettingTab extends PluginSettingTab {
         .onChange(async (value: ScanScopeMode) => {
           this.plugin.settings.scanScopeMode = value;
           await this.plugin.saveSettings();
-          this.display();
+          this.update();
         }));
 
     if (this.plugin.settings.scanScopeMode === "folders") {
@@ -2078,7 +2084,7 @@ class R2MediaSyncSettingTab extends PluginSettingTab {
         .onClick(async () => {
           const result = await this.plugin.scanConfiguredScope(true);
           new Notice(`R2 Media Sync: ${this.plugin.t("scannedNotice", { scanned: result.scanned, uploaded: result.uploaded })}`);
-          this.display();
+          this.update();
         }));
 
     const status = containerEl.createDiv({ cls: "r2-media-sync-status" });

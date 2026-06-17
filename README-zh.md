@@ -1,7 +1,7 @@
 # R2 Media Sync
 
 [![GitHub Release](https://img.shields.io/github/v/release/fab34/cloudflare-media-sync?logo=github&color=blue)](https://github.com/fab34/cloudflare-media-sync/releases)
-[![Obsidian Version](https://img.shields.io/badge/Obsidian-v1.6.6+-purple?logo=obsidian)](https://obsidian.md/)
+[![Obsidian Version](https://img.shields.io/badge/Obsidian-v1.13.0+-purple?logo=obsidian)](https://obsidian.md/)
 [![Obsidian Downloads](https://img.shields.io/badge/dynamic/json?logo=obsidian&color=3f1b63&label=downloads&query=%24%5B%22cloudflare-media-sync%22%5D.downloads&url=https%3A%2F%2Fraw.githubusercontent.com%2Fobsidianmd%2Fobsidian-releases%2Fmaster%2Fcommunity-plugin-stats.json)](https://community.obsidian.md/plugins/cloudflare-media-sync)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![GitHub Issues](https://img.shields.io/github/issues/fab34/cloudflare-media-sync)](https://github.com/fab34/cloudflare-media-sync/issues)
@@ -15,9 +15,9 @@ R2 Media Sync 是一個 Obsidian 外掛，用來自動將 Markdown 筆記中引�
 - AI 助手或自動化腳本會直接寫入 Markdown 與圖片
 - 批次搬移舊筆記時，留下大量本機圖片連結
 
-## 最近更新 (v0.3.4)
+## 最近更新 (v0.3.5)
 
-- **Obsidian API 相容性**：透過將新版設定 API `this.update()` 替換為標準相容的 `this.display()`，修復了與較舊 Obsidian 版本（最低至 `v1.6.6+`）的相容性錯誤。
+- **Obsidian API 相容性**：切換回官方推薦的 `getSettingDefinitions` 設定面板 API，並將最小支援版本提升至 `v1.13.0+` 以符合社群審查規範。
 - **TypeScript 健全性**：消除非同步排程 queue 使用 `any` 所引發的 unsafe type 語法警告。
 - **同步儀表板 (v0.3.3)**：新增完整的同步資訊面板，可一目了然狀態、範圍統計、上傳歷史、失敗次數，並提供快速維護操作。
 - **彈出視窗相容 (v0.3.3)**：將程式碼中的 `globalThis` 全面改為 `window`，修復了在彈出視窗（popout window）下的相容性警告。

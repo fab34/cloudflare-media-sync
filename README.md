@@ -1,7 +1,7 @@
 # R2 Media Sync
 
 [![GitHub Release](https://img.shields.io/github/v/release/fab34/cloudflare-media-sync?logo=github&color=blue)](https://github.com/fab34/cloudflare-media-sync/releases)
-[![Obsidian Version](https://img.shields.io/badge/Obsidian-v1.6.6+-purple?logo=obsidian)](https://obsidian.md/)
+[![Obsidian Version](https://img.shields.io/badge/Obsidian-v1.13.0+-purple?logo=obsidian)](https://obsidian.md/)
 [![Obsidian Downloads](https://img.shields.io/badge/dynamic/json?logo=obsidian&color=3f1b63&label=downloads&query=%24%5B%22cloudflare-media-sync%22%5D.downloads&url=https%3A%2F%2Fraw.githubusercontent.com%2Fobsidianmd%2Fobsidian-releases%2Fmaster%2Fcommunity-plugin-stats.json)](https://community.obsidian.md/plugins/cloudflare-media-sync)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![GitHub Issues](https://img.shields.io/github/issues/fab34/cloudflare-media-sync)](https://github.com/fab34/cloudflare-media-sync/issues)
@@ -10,9 +10,9 @@ R2 Media Sync is an Obsidian plugin that automatically uploads local media asset
 
 It is designed for workflows where other tools create local image files inside your vault, such as PDF-to-Markdown converters, document importers, AI assistants, or batch import tools.
 
-## Recent Updates (v0.3.4)
+## Recent Updates (v0.3.5)
 
-- **Obsidian API Compatibility**: Fixed compatibility with older Obsidian versions (down to `v1.6.6+`) by replacing the newer `this.update()` API with standard `this.display()`.
+- **Obsidian API Compatibility**: Switch back to the official `getSettingDefinitions` settings layout API and raised the minimum app version to `v1.13.0+` to satisfy community submission guidelines.
 - **TypeScript Health**: Fixed linter warnings about unsafe assignment and argument passing on asynchronous queue items.
 - **Sync Dashboard (v0.3.3)**: Added a comprehensive synchronization dashboard showing sync status, scope statistics, history, failures, and maintenance controls.
 - **Popout Windows (v0.3.3)**: Fixed a popout compatibility bug by replacing `globalThis` with `window` globally.
