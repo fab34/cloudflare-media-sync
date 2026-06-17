@@ -38,17 +38,12 @@ In short:
 
 ## Current Mobile Behavior
 
-R2 Media Sync now supports a conservative mobile mode.
+R2 Media Sync fully supports Obsidian mobile.
 
-Current tested behavior:
-
-- On mobile, newly inserted local images can still be uploaded and rewritten to R2 URLs.
-- In a recent real-device test, image links were rewritten about 30 seconds after insertion.
-- The plugin does not create the desktop status bar on mobile.
-- `Scan on startup` is disabled at runtime on mobile even if it was enabled in saved settings.
-- `Delete local image after upload` is disabled at runtime on mobile even if it was enabled in saved settings.
-
-This keeps the mobile workflow safer while iCloud and cross-device sync are still catching up.
+- **Background Auto-monitoring**: Automatically detects newly inserted local images on mobile, uploads them to R2, and rewrites links to public URLs.
+- **Local Cleanup Support**: Supports `Delete local image after upload` on mobile. You can configure it to move files to the review folder or trash after upload.
+- **iCloud Sync Staging**: Recommended when using iCloud sync. Setting the local cleanup mode to "Move to review folder" (e.g. `_r2_media_review`) or "Move to Obsidian trash" keeps files local in a safe staging area until they sync, preventing missing image issues on desktop due to sync delay.
+- **UI Constraints**: The plugin does not create the desktop status bar on mobile. `Scan on startup` is always disabled at runtime on mobile to ensure fast app startup.
 
 ## Why
 
@@ -94,7 +89,7 @@ R2 Media Sync uses conservative defaults for first-time installs:
 - If local cleanup is enabled, review folder mode is the safer option for multi-device sync.
 - Local cleanup is skipped automatically when the note still contains local image links after rewrite.
 - Failed uploads are recorded locally so you can inspect and retry later instead of losing track of partial failures.
-- On mobile, startup scans and local deletion are forced off at runtime for safety.
+- On mobile, startup scans are forced off at runtime for performance and safety.
 
 After confirming your R2 settings, public URL, and scan scope, you can opt in to startup scans or local deletion from the plugin settings.
 
