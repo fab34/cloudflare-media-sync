@@ -1,7 +1,8 @@
 # Changelog
 
-## Unreleased
+## 0.3.3
 
+- Fix: Resolve Obsidian API compatibility issues (getSettingDefinitions) and replace `globalThis` with `window` for popout window compatibility.
 - Added a sync dashboard with status, scan scope, upload history, failure, review folder metrics, and maintenance actions.
 - Added a re-scan action to failed upload entries.
 
