@@ -36,6 +36,20 @@ In short:
 - Optionally deletes the local image file after successful upload.
 - Can read Cloudflare R2 settings from the EzImage plugin or use its own manual R2 settings.
 
+## Current Mobile Behavior
+
+R2 Media Sync now supports a conservative mobile mode.
+
+Current tested behavior:
+
+- On mobile, newly inserted local images can still be uploaded and rewritten to R2 URLs.
+- In a recent real-device test, image links were rewritten about 30 seconds after insertion.
+- The plugin does not create the desktop status bar on mobile.
+- `Scan on startup` is disabled at runtime on mobile even if it was enabled in saved settings.
+- `Delete local image after upload` is disabled at runtime on mobile even if it was enabled in saved settings.
+
+This keeps the mobile workflow safer while iCloud and cross-device sync are still catching up.
+
 ## Why
 
 Plugins such as EzImage handle pasted or dragged images very well, but some Obsidian workflows create files directly in the vault and write local links into Markdown. For example, a PDF conversion plugin may create files like `_page_3_Picture_2.jpeg` and insert:
@@ -62,6 +76,8 @@ Those files can clutter the vault and consume sync storage. R2 Media Sync cleans
 - Keep a local failed upload log for troubleshooting.
 - View recent failed upload details in a modal.
 - Open a sync dashboard with recent status, scope count, upload history count, failure count, review folder size, and maintenance actions.
+- Repair broken local image links from upload history when the attachment file is already missing.
+- Preserve JPEG GPS coordinates in a local metadata cache before rewriting images to R2 URLs, so companion tools such as Geo Capture can still use photo location data later.
 - Show the latest sync state in the Obsidian status bar.
 - Choose the plugin interface language: Auto, English, or Traditional Chinese.
 - Manual command to scan the current note.
@@ -75,8 +91,10 @@ R2 Media Sync uses conservative defaults for first-time installs:
 - It does not scan on startup by default.
 - It does not delete local images by default.
 - You can run a manual scan on the current note before enabling broader automation.
-- If local cleanup is enabled, files can be moved through Obsidian's trash handling or moved to a review folder after upload and link rewrite.
+- If local cleanup is enabled, review folder mode is the safer option for multi-device sync.
+- Local cleanup is skipped automatically when the note still contains local image links after rewrite.
 - Failed uploads are recorded locally so you can inspect and retry later instead of losing track of partial failures.
+- On mobile, startup scans and local deletion are forced off at runtime for safety.
 
 After confirming your R2 settings, public URL, and scan scope, you can opt in to startup scans or local deletion from the plugin settings.
 
@@ -89,6 +107,21 @@ After confirming your R2 settings, public URL, and scan scope, you can opt in to
 - When using EzImage mode, this plugin reads the EzImage `data.json` file from your vault config folder locally and does not modify it.
 - Public Markdown links will contain your configured public R2 URL.
 - Upload history and failed upload logs are stored locally in this plugin's data folder.
+- When JPEG GPS metadata is available, only the extracted coordinates are stored in the local image metadata cache. Full EXIF data and image files are not copied into that cache.
+
+## Image Metadata Cache
+
+Before uploading a JPEG image, R2 Media Sync reads local EXIF GPS coordinates when available and stores a small local record in:
+
+```text
+.obsidian/plugins/cloudflare-media-sync/image_metadata.json
+```
+
+Each record is keyed by file hash and includes the original vault path, file name, R2 object key, public URL, related Markdown paths, upload time, and optional GPS coordinates.
+
+This helps multi-plugin workflows. For example, after a photo is rewritten to an R2 URL or the local attachment is no longer available on another device, Geo Capture can still look up the saved GPS point and suggest nearby places.
+
+This cache is local to your vault and is intended for recovery and interoperability. It does not upload location data anywhere by itself.
 
 ## Vault Access
 
@@ -230,6 +263,16 @@ Recommended exclusions:
 5. Confirm the note was rewritten to public R2 URLs.
 6. Enable local cleanup or startup scans only after the manual test behaves as expected.
 
+### Recommended Mobile Run
+
+1. Keep `Delete local image after upload` disabled.
+2. Keep `Scan on startup` disabled.
+3. Insert one test image into a note on mobile.
+4. Wait for the local link to be rewritten to an R2 URL.
+5. Confirm the same note renders correctly on desktop before relying on the workflow for important captures.
+
+If you also use EzImage, note that EzImage's own local-save behavior may affect whether a local file remains in the vault after upload.
+
 ## Commands
 
 Open the command palette and search for `R2 Media Sync`.
@@ -240,6 +283,7 @@ Open the command palette and search for `R2 Media Sync`.
 - `Show failed upload summary`
 - `Clear failed upload log`
 - `Clear local review folder`
+- `Repair missing local image links`
 - `Open sync dashboard`
 
 ## Example
@@ -301,6 +345,12 @@ See `COMMUNITY_SUBMISSION.md` for the suggested entry and checklist.
 ## Notes
 
 This plugin intentionally only processes image files that are referenced by Markdown notes. It does not upload unreferenced orphan images, because doing so could remove files that are still being staged or reviewed.
+
+For multi-device setups, the safest pattern is:
+
+1. Upload and rewrite first.
+2. Confirm the rewritten note renders on the other device.
+3. Only then consider removing local files or emptying the review folder.
 
 ## License
 

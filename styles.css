@@ -1,3 +1,10 @@
+.r2-media-sync-statusbar {
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .r2-media-sync-status {
   color: var(--text-muted);
   font-size: var(--font-ui-smaller);

@@ -71,8 +71,8 @@ const DEFAULT_SETTINGS: R2MediaSyncSettings = {
   publicUrl: "",
   pathTemplate: "{yyyy}/{MM}/{timestamp}-{random}.{ext}",
   deleteLocalAfterUpload: false,
-  localCleanupMode: "trash",
-  localCleanupFolder: "_synced_media_trash",
+  localCleanupMode: "folder",
+  localCleanupFolder: "_r2_media_review",
   reuseUploadedByHash: true,
   processMarkdownImages: true,
   processWikiImages: true,
@@ -112,7 +112,17 @@ const MARKDOWN_IMAGE_RE = /!\[([^\]]*)\]\(([^)]+)\)/g;
 const WIKILINK_IMAGE_RE = /!\[\[([^\]]+\.(?:png|jpe?g|gif|webp|bmp|svg))(?:\|[^\]]*)?\]\]/gi;
 const FAILED_UPLOAD_LOG = "failed_uploads.json";
 const UPLOAD_HISTORY_LOG = "upload_history.json";
+const IMAGE_METADATA_LOG = "image_metadata.json";
 const MAX_FAILED_UPLOADS = 100;
+
+const JPEG_SOI = 0xffd8;
+const APP1_MARKER = 0xffe1;
+const EXIF_HEADER = "Exif\0\0";
+const TAG_GPS_IFD = 0x8825;
+const TAG_GPS_LAT_REF = 0x0001;
+const TAG_GPS_LAT = 0x0002;
+const TAG_GPS_LON_REF = 0x0003;
+const TAG_GPS_LON = 0x0004;
 
 const TEXT = {
   en: {
@@ -132,8 +142,11 @@ const TEXT = {
     recordedFailedUpload: "Recorded failed upload: {path}",
     uploadedFor: "Uploaded {count} image(s) for {path}",
     uploadedNotice: "Uploaded {count} image(s).",
-    deleteEnabledNotice: "Local files will be moved to trash after successful upload and link rewrite.",
+    deleteEnabledNotice: "Automatic local cleanup is enabled. For multi-device sync, review folder mode is the safest option.",
     movedToReviewFolder: "Moved local file to review folder: {path}",
+    skippedCleanupDueToLocalRefs: "Skipped local cleanup because note still contains local image links: {path}",
+    repairedMissingLinks: "Repaired {count} missing local image link(s).",
+    noMissingLinksToRepair: "No missing local image links could be repaired.",
     importedEzImage: "Imported EzImage R2 settings.",
     importEzImageFailed: "Could not import EzImage settings",
     startupScanFailed: "Startup scan failed",
@@ -144,6 +157,7 @@ const TEXT = {
     cmdShowFailed: "Show failed upload summary",
     cmdClearFailed: "Clear failed upload log",
     cmdClearReviewFolder: "Clear local review folder",
+    cmdRepairMissingLinks: "Repair missing local image links",
     cmdOpenDashboard: "Open sync dashboard",
     dashboardTitle: "Sync dashboard",
     dashboardLastStatus: "Last status",
@@ -154,6 +168,7 @@ const TEXT = {
     dashboardReviewFiles: "Review files",
     dashboardReviewSize: "Review size",
     dashboardScanButton: "Scan now",
+    dashboardRepairButton: "Repair missing links",
     dashboardFailedButton: "View failed uploads",
     dashboardClearFailedButton: "Clear failed log",
     dashboardClearReviewButton: "Clear review folder",
@@ -201,7 +216,7 @@ const TEXT = {
     deleteLocalName: "Delete local image after upload",
     deleteLocalDesc: "Off by default. Enable only if you are comfortable removing local files after successful upload.",
     cleanupModeName: "Local cleanup mode",
-    cleanupModeDesc: "Choose what happens to local files after upload and link rewrite.",
+    cleanupModeDesc: "Choose what happens to local files after upload and link rewrite. Review folder mode is recommended for multi-device sync.",
     cleanupMoveToTrash: "Move to Obsidian trash",
     cleanupMoveToFolder: "Move to review folder",
     cleanupFolderName: "Review folder",
@@ -255,8 +270,11 @@ const TEXT = {
     recordedFailedUpload: "已記錄失敗上傳：{path}",
     uploadedFor: "{path} 已上傳 {count} 張圖片",
     uploadedNotice: "已上傳 {count} 張圖片。",
-    deleteEnabledNotice: "成功上傳並改寫連結後，本機檔案會移到 Obsidian 的垃圾桶。",
+    deleteEnabledNotice: "已啟用自動清理。本機多裝置同步時，建議改用檢查資料夾模式。",
     movedToReviewFolder: "已將本機檔案移到檢查資料夾：{path}",
+    skippedCleanupDueToLocalRefs: "略過本機清理，因為 {path} 仍包含本機圖片連結。",
+    repairedMissingLinks: "已修復 {count} 個遺失的本機圖片連結。",
+    noMissingLinksToRepair: "沒有可修復的遺失本機圖片連結。",
     importedEzImage: "已匯入 EzImage 的 R2 設定。",
     importEzImageFailed: "無法匯入 EzImage 設定",
     startupScanFailed: "啟動掃描失敗",
@@ -267,6 +285,7 @@ const TEXT = {
     cmdShowFailed: "顯示失敗上傳摘要",
     cmdClearFailed: "清除失敗上傳紀錄",
     cmdClearReviewFolder: "清理本機檢查資料夾",
+    cmdRepairMissingLinks: "修復遺失的本機圖片連結",
     cmdOpenDashboard: "開啟同步儀表板",
     dashboardTitle: "同步儀表板",
     dashboardLastStatus: "最近狀態",
@@ -277,6 +296,7 @@ const TEXT = {
     dashboardReviewFiles: "檢查檔案數",
     dashboardReviewSize: "檢查檔案容量",
     dashboardScanButton: "立即掃描",
+    dashboardRepairButton: "修復遺失連結",
     dashboardFailedButton: "查看失敗上傳",
     dashboardClearFailedButton: "清除失敗紀錄",
     dashboardClearReviewButton: "清理檢查資料夾",
@@ -324,7 +344,7 @@ const TEXT = {
     deleteLocalName: "上傳後刪除本機圖片",
     deleteLocalDesc: "預設關閉。確認你能接受成功上傳後移除本機檔案，再啟用此選項。",
     cleanupModeName: "本機清理方式",
-    cleanupModeDesc: "選擇成功上傳並改寫連結後，要如何處理本機檔案。",
+    cleanupModeDesc: "選擇成功上傳並改寫連結後，要如何處理本機檔案。多裝置同步時建議使用檢查資料夾模式。",
     cleanupMoveToTrash: "移到 Obsidian 垃圾桶",
     cleanupMoveToFolder: "移到檢查資料夾",
     cleanupFolderName: "檢查資料夾",
@@ -384,7 +404,7 @@ function formatBytes(bytes: number): string {
 
 function preferredLanguage(setting: UiLanguage): "en" | "zh-TW" {
   if (setting === "en" || setting === "zh-TW") return setting;
-  const language = navigator.language.toLowerCase();
+  const language = typeof navigator !== "undefined" ? navigator.language.toLowerCase() : "en";
   return language.includes("zh-tw") || language.includes("zh-hant") || language.includes("zh-hk") || language.includes("zh-mo")
     ? "zh-TW"
     : "en";
@@ -424,7 +444,7 @@ async function hmacSha256(key: ArrayBuffer, value: string): Promise<ArrayBuffer>
 }
 
 function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => window.setTimeout(resolve, ms));
+  return new Promise((resolve) => globalThis.setTimeout(resolve, ms));
 }
 
 function encodeKey(value: string): string {
@@ -470,6 +490,128 @@ function isRemote(target: string): boolean {
 
 function stripAngleBrackets(value: string): string {
   return value.startsWith("<") && value.endsWith(">") ? value.slice(1, -1) : value;
+}
+
+function sanitizeMarkdownImageAlt(value: string | undefined): string {
+  const trimmed = (value ?? "").trim();
+  if (!trimmed) return "image";
+  const [label] = trimmed.split("|", 1);
+  return label.trim() || "image";
+}
+
+function readExifGps(arrayBuffer: ArrayBuffer): GeoPoint | null {
+  const view = new DataView(arrayBuffer);
+  const exifStart = findExifStart(view);
+  return exifStart === null ? null : readGpsFromExif(view, exifStart);
+}
+
+function findExifStart(view: DataView): number | null {
+  if (view.byteLength < 4 || view.getUint16(0) !== JPEG_SOI) return null;
+
+  let offset = 2;
+  while (offset + 4 < view.byteLength) {
+    const marker = view.getUint16(offset);
+    const segmentLength = view.getUint16(offset + 2);
+    const segmentStart = offset + 4;
+
+    if (marker === APP1_MARKER && readAscii(view, segmentStart, EXIF_HEADER.length) === EXIF_HEADER) {
+      return segmentStart + EXIF_HEADER.length;
+    }
+
+    offset += 2 + segmentLength;
+  }
+
+  return null;
+}
+
+function readGpsFromExif(view: DataView, tiffStart: number): GeoPoint | null {
+  const byteOrder = view.getUint16(tiffStart);
+  const littleEndian = byteOrder === 0x4949;
+  if (!littleEndian && byteOrder !== 0x4d4d) return null;
+
+  const context = { view, tiffStart, littleEndian };
+  if (readUint16(context, tiffStart + 2) !== 42) return null;
+
+  const firstIfdOffset = readUint32(context, tiffStart + 4);
+  const gpsIfdPointer = readIfdEntry(context, tiffStart + firstIfdOffset, TAG_GPS_IFD);
+  if (!gpsIfdPointer) return null;
+
+  const gpsIfdOffset = tiffStart + gpsIfdPointer.valueOffset;
+  const latRef = readAsciiValue(context, gpsIfdOffset, TAG_GPS_LAT_REF);
+  const lonRef = readAsciiValue(context, gpsIfdOffset, TAG_GPS_LON_REF);
+  const latEntry = readIfdEntry(context, gpsIfdOffset, TAG_GPS_LAT);
+  const lonEntry = readIfdEntry(context, gpsIfdOffset, TAG_GPS_LON);
+  if (!latRef || !lonRef || !latEntry || !lonEntry) return null;
+
+  const lat = readDms(context, latEntry);
+  const lon = readDms(context, lonEntry);
+  if (lat === null || lon === null) return null;
+
+  return {
+    lat: latRef.trim().toUpperCase() === "S" ? -lat : lat,
+    lon: lonRef.trim().toUpperCase() === "W" ? -lon : lon,
+  };
+}
+
+function readIfdEntry(context: TiffContext, ifdOffset: number, tag: number): IfdEntry | null {
+  const entryCount = readUint16(context, ifdOffset);
+
+  for (let index = 0; index < entryCount; index += 1) {
+    const entryOffset = ifdOffset + 2 + index * 12;
+    const entry = {
+      tag: readUint16(context, entryOffset),
+      type: readUint16(context, entryOffset + 2),
+      count: readUint32(context, entryOffset + 4),
+      valueOffset: readUint32(context, entryOffset + 8),
+      entryOffset,
+    };
+
+    if (entry.tag === tag) return entry;
+  }
+
+  return null;
+}
+
+function readAsciiValue(context: TiffContext, ifdOffset: number, tag: number): string | null {
+  const entry = readIfdEntry(context, ifdOffset, tag);
+  if (!entry) return null;
+
+  const valueStart = entry.count <= 4 ? entry.entryOffset + 8 : context.tiffStart + entry.valueOffset;
+  return readAscii(context.view, valueStart, entry.count).replace(/\0/g, "");
+}
+
+function readDms(context: TiffContext, entry: IfdEntry): number | null {
+  if (entry.type !== 5 || entry.count !== 3) return null;
+
+  const valueStart = context.tiffStart + entry.valueOffset;
+  const degrees = readRational(context, valueStart);
+  const minutes = readRational(context, valueStart + 8);
+  const seconds = readRational(context, valueStart + 16);
+  if ([degrees, minutes, seconds].some((value) => value === null)) return null;
+
+  return (degrees as number) + (minutes as number) / 60 + (seconds as number) / 3600;
+}
+
+function readRational(context: TiffContext, offset: number): number | null {
+  const numerator = readUint32(context, offset);
+  const denominator = readUint32(context, offset + 4);
+  return denominator === 0 ? null : numerator / denominator;
+}
+
+function readUint16(context: TiffContext, offset: number): number {
+  return context.view.getUint16(offset, context.littleEndian);
+}
+
+function readUint32(context: TiffContext, offset: number): number {
+  return context.view.getUint32(offset, context.littleEndian);
+}
+
+function readAscii(view: DataView, offset: number, length: number): string {
+  let value = "";
+  for (let index = 0; index < length && offset + index < view.byteLength; index += 1) {
+    value += String.fromCharCode(view.getUint8(offset + index));
+  }
+  return value;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -631,6 +773,39 @@ interface UploadHistoryEntry {
   url: string;
 }
 
+interface GeoPoint {
+  lat: number;
+  lon: number;
+}
+
+interface ImageMetadataEntry {
+  fileName: string;
+  originalPath: string;
+  hash: string;
+  key: string;
+  size: number;
+  uploadedAt: string;
+  url: string;
+  markdownPaths: string[];
+  gps?: GeoPoint & {
+    source: "exif";
+  };
+}
+
+interface TiffContext {
+  view: DataView;
+  tiffStart: number;
+  littleEndian: boolean;
+}
+
+interface IfdEntry {
+  tag: number;
+  type: number;
+  count: number;
+  valueOffset: number;
+  entryOffset: number;
+}
+
 interface FailedUploadEntry {
   time: string;
   markdownPath: string;
@@ -651,15 +826,21 @@ interface DashboardData {
 
 export default class R2MediaSyncPlugin extends Plugin {
   settings: R2MediaSyncSettings;
-  private queue = new Map<string, number>();
+  private queue = new Map<string, ReturnType<typeof globalThis.setTimeout>>();
   private processing = new Set<string>();
+  private pendingRescan = new Set<string>();
+  private ignoreNextModify = new Set<string>();
   private lastStatus = "";
   private statusBarEl: HTMLElement | null = null;
+
+  private isMobileRuntime(): boolean {
+    return Platform.isMobile;
+  }
 
   async onload(): Promise<void> {
     await this.loadSettings();
 
-    if (!Platform.isMobile) {
+    if (!this.isMobileRuntime()) {
       this.statusBarEl = this.addStatusBarItem();
       this.statusBarEl.addClass("r2-media-sync-statusbar");
     }
@@ -754,11 +935,18 @@ export default class R2MediaSyncPlugin extends Plugin {
       },
     });
 
+    this.addCommand({
+      id: "repair-missing-local-image-links",
+      name: this.t("cmdRepairMissingLinks"),
+      callback: async () => {
+        await this.repairMissingLocalImageLinks(true);
+      },
+    });
     this.registerEvent(this.app.vault.on("create", (file) => this.handleVaultEvent(file)));
     this.registerEvent(this.app.vault.on("modify", (file) => this.handleVaultEvent(file)));
 
     this.app.workspace.onLayoutReady(() => {
-      if (this.settings.processOnStartup) {
+      if (!this.isMobileRuntime() && this.settings.processOnStartup) {
         this.scanConfiguredScope(false).catch((error) => this.reportError(this.t("startupScanFailed"), error));
       }
     });
@@ -766,7 +954,7 @@ export default class R2MediaSyncPlugin extends Plugin {
 
   onunload(): void {
     for (const timeoutId of this.queue.values()) {
-      window.clearTimeout(timeoutId);
+      globalThis.clearTimeout(timeoutId);
     }
     this.queue.clear();
   }
@@ -870,6 +1058,14 @@ export default class R2MediaSyncPlugin extends Plugin {
     if (!this.isPathInScope(file.path)) return;
 
     if (file.extension === "md") {
+      if (this.ignoreNextModify.has(file.path)) {
+        this.ignoreNextModify.delete(file.path);
+        return;
+      }
+      if (this.processing.has(file.path)) {
+        this.pendingRescan.add(file.path);
+        return;
+      }
       this.enqueue(file.path, this.settings.debounceMs);
       return;
     }
@@ -879,6 +1075,10 @@ export default class R2MediaSyncPlugin extends Plugin {
       if (!(parent instanceof TFolder)) return;
       for (const child of parent.children) {
         if (child instanceof TFile && child.extension === "md" && this.isPathInScope(child.path)) {
+          if (this.processing.has(child.path)) {
+            this.pendingRescan.add(child.path);
+            continue;
+          }
           this.enqueue(child.path, this.settings.debounceMs);
         }
       }
@@ -887,8 +1087,8 @@ export default class R2MediaSyncPlugin extends Plugin {
 
   private enqueue(path: string, delayMs: number): void {
     const previous = this.queue.get(path);
-    if (previous) window.clearTimeout(previous);
-    const timeoutId = window.setTimeout(() => {
+    if (previous) globalThis.clearTimeout(previous);
+    const timeoutId = globalThis.setTimeout(() => {
       void (async () => {
         this.queue.delete(path);
         const file = this.app.vault.getAbstractFileByPath(path);
@@ -929,17 +1129,24 @@ export default class R2MediaSyncPlugin extends Plugin {
   }
 
   private async getEffectiveSettings(): Promise<R2MediaSyncSettings> {
+    const mobileOverrides: Partial<R2MediaSyncSettings> = this.isMobileRuntime()
+      ? {
+          deleteLocalAfterUpload: false,
+          processOnStartup: false,
+        }
+      : {};
+
     if (this.settings.configSource === "manual") {
       this.validateR2Settings(this.settings);
-      return this.settings;
+      return Object.assign({}, this.settings, mobileOverrides);
     }
 
     try {
       const imported = await this.readEzImageSettings();
-      return Object.assign({}, this.settings, imported);
+      return Object.assign({}, this.settings, imported, mobileOverrides);
     } catch {
       this.validateR2Settings(this.settings);
-      return this.settings;
+      return Object.assign({}, this.settings, mobileOverrides);
     }
   }
 
@@ -1001,6 +1208,96 @@ export default class R2MediaSyncPlugin extends Plugin {
     return null;
   }
 
+  private noteStillHasLocalRefs(content: string, images: TFile[]): boolean {
+    const imageNames = new Set(images.map((image) => image.name));
+
+    for (const match of content.matchAll(MARKDOWN_IMAGE_RE)) {
+      const clean = stripAngleBrackets(decodeURIComponent(match[2].trim().split("|", 1)[0]));
+      if (!clean || isRemote(clean) || clean.startsWith("#")) continue;
+      const fileName = clean.split("/").pop() ?? clean;
+      if (imageNames.has(fileName)) return true;
+    }
+
+    for (const match of content.matchAll(WIKILINK_IMAGE_RE)) {
+      const clean = stripAngleBrackets(decodeURIComponent(match[1].trim().split("|", 1)[0]));
+      if (!clean) continue;
+      const fileName = clean.split("/").pop() ?? clean;
+      if (imageNames.has(fileName)) return true;
+    }
+
+    return false;
+  }
+
+  async repairMissingLocalImageLinks(showNotice: boolean): Promise<number> {
+    const history = await this.readUploadHistory();
+    const latestByName = new Map<string, UploadHistoryEntry>();
+
+    for (const entry of Object.values(history)) {
+      const current = latestByName.get(entry.fileName);
+      if (!current || entry.uploadedAt > current.uploadedAt) {
+        latestByName.set(entry.fileName, entry);
+      }
+    }
+
+    let repaired = 0;
+    const markdownFiles = this.app.vault.getMarkdownFiles().filter((file) => this.isPathInScope(file.path));
+    for (const file of markdownFiles) {
+      repaired += await this.rewriteMissingLinksInFile(file, latestByName);
+    }
+
+    const key = repaired ? "repairedMissingLinks" : "noMissingLinksToRepair";
+    this.updateStatus(this.t(key, { count: repaired }));
+    if (showNotice) {
+      new Notice(`R2 Media Sync: ${this.t(key, { count: repaired })}`);
+    }
+    return repaired;
+  }
+
+  private async rewriteMissingLinksInFile(markdownFile: TFile, latestByName: Map<string, UploadHistoryEntry>): Promise<number> {
+    const original = await this.app.vault.read(markdownFile);
+    const replacements: Array<{ start: number; end: number; text: string }> = [];
+
+    for (const match of original.matchAll(MARKDOWN_IMAGE_RE)) {
+      const clean = stripAngleBrackets(decodeURIComponent(match[2].trim().split("|", 1)[0]));
+      if (!clean || isRemote(clean) || clean.startsWith("#")) continue;
+      const fileName = clean.split("/").pop() ?? clean;
+      if (await this.resolveImage(markdownFile, clean)) continue;
+      const entry = latestByName.get(fileName);
+      if (!entry) continue;
+      const alt = sanitizeMarkdownImageAlt(match[1]);
+      replacements.push({
+        start: match.index ?? 0,
+        end: (match.index ?? 0) + match[0].length,
+        text: `![${alt}](${entry.url})`,
+      });
+    }
+
+    for (const match of original.matchAll(WIKILINK_IMAGE_RE)) {
+      const clean = stripAngleBrackets(decodeURIComponent(match[1].trim().split("|", 1)[0]));
+      if (!clean) continue;
+      const fileName = clean.split("/").pop() ?? clean;
+      if (await this.resolveImage(markdownFile, clean)) continue;
+      const entry = latestByName.get(fileName);
+      if (!entry) continue;
+      replacements.push({
+        start: match.index ?? 0,
+        end: (match.index ?? 0) + match[0].length,
+        text: `![image](${entry.url})`,
+      });
+    }
+
+    if (!replacements.length) return 0;
+
+    let rewritten = original;
+    for (const replacement of replacements.sort((a, b) => b.start - a.start)) {
+      rewritten = rewritten.slice(0, replacement.start) + replacement.text + rewritten.slice(replacement.end);
+    }
+
+    this.ignoreNextModify.add(markdownFile.path);
+    await this.app.vault.modify(markdownFile, rewritten);
+    return replacements.length;
+  }
+
   async processFile(markdownFile: TFile, manual: boolean): Promise<number> {
     if (markdownFile.extension !== "md" || this.processing.has(markdownFile.path)) return 0;
     if (!this.isPathInScope(markdownFile.path)) return 0;
@@ -1018,7 +1315,7 @@ export default class R2MediaSyncPlugin extends Plugin {
           const image = await this.resolveImage(markdownFile, match[2]);
           if (!image || !this.isPathInScope(image.path)) continue;
           if (!uploaded.has(image.path)) uploaded.set(image.path, await this.uploadImage(image, settings, markdownFile.path));
-          const alt = match[1] || "image";
+          const alt = sanitizeMarkdownImageAlt(match[1]);
           replacements.push({
             start: match.index ?? 0,
             end: (match.index ?? 0) + match[0].length,
@@ -1052,22 +1349,28 @@ export default class R2MediaSyncPlugin extends Plugin {
       for (const item of replacements.sort((a, b) => b.start - a.start)) {
         rewritten = rewritten.slice(0, item.start) + item.text + rewritten.slice(item.end);
       }
+      this.ignoreNextModify.add(markdownFile.path);
       await this.app.vault.modify(markdownFile, rewritten);
 
       if (settings.deleteLocalAfterUpload) {
-        const deleted = new Set<string>();
-        for (const item of replacements) {
-          if (deleted.has(item.image.path)) continue;
-          deleted.add(item.image.path);
-          const image = this.app.vault.getAbstractFileByPath(item.image.path);
-          if (image instanceof TFile) {
-            try {
-              await this.cleanupLocalImage(image, settings);
-            } catch (error) {
-              throw new Error(
-                `Uploaded and rewrote links, but failed to clean up local image: ${item.image.path}. ` +
-                (error instanceof Error ? error.message : String(error)),
-              );
+        const uniqueImages = Array.from(new Map(replacements.map((item) => [item.image.path, item.image])).values());
+        if (this.noteStillHasLocalRefs(rewritten, uniqueImages)) {
+          this.updateStatus(this.t("skippedCleanupDueToLocalRefs", { path: markdownFile.path }));
+        } else {
+          const deleted = new Set<string>();
+          for (const item of replacements) {
+            if (deleted.has(item.image.path)) continue;
+            deleted.add(item.image.path);
+            const image = this.app.vault.getAbstractFileByPath(item.image.path);
+            if (image instanceof TFile) {
+              try {
+                await this.cleanupLocalImage(image, settings);
+              } catch (error) {
+                throw new Error(
+                  `Uploaded and rewrote links, but failed to clean up local image: ${item.image.path}. ` +
+                  (error instanceof Error ? error.message : String(error)),
+                );
+              }
             }
           }
         }
@@ -1081,6 +1384,9 @@ export default class R2MediaSyncPlugin extends Plugin {
       return 0;
     } finally {
       this.processing.delete(markdownFile.path);
+      if (this.pendingRescan.delete(markdownFile.path)) {
+        this.enqueue(markdownFile.path, Math.max(500, Math.min(this.settings.debounceMs, 1500)));
+      }
     }
   }
 
@@ -1161,10 +1467,12 @@ export default class R2MediaSyncPlugin extends Plugin {
   private async uploadImage(file: TFile, settings: R2MediaSyncSettings, markdownPath: string): Promise<string> {
     const data = await this.app.vault.readBinary(file);
     const hash = await sha256Hex(data);
+    const gps = readExifGps(data);
     if (settings.reuseUploadedByHash) {
       const history = await this.readUploadHistory();
       const existing = history[hash];
       if (existing) {
+        await this.recordImageMetadata(hash, file, existing.key, existing.url, markdownPath, gps, existing.uploadedAt);
         this.updateStatus(this.t("reusedUrl", { path: file.path }));
         return existing.url;
       }
@@ -1183,7 +1491,36 @@ export default class R2MediaSyncPlugin extends Plugin {
       };
       await this.writeJsonFile(UPLOAD_HISTORY_LOG, history);
     }
+    await this.recordImageMetadata(hash, file, key, url, markdownPath, gps);
     return url;
+  }
+
+  private async recordImageMetadata(
+    hash: string,
+    file: TFile,
+    key: string,
+    url: string,
+    markdownPath: string,
+    gps: GeoPoint | null,
+    uploadedAt = new Date().toISOString(),
+  ): Promise<void> {
+    const metadata = await this.readImageMetadata();
+    const existing = metadata[hash];
+    const markdownPaths = new Set([...(existing?.markdownPaths ?? []), markdownPath]);
+
+    metadata[hash] = {
+      fileName: file.name,
+      originalPath: file.path,
+      hash,
+      key,
+      size: file.stat.size,
+      uploadedAt: existing?.uploadedAt ?? uploadedAt,
+      url,
+      markdownPaths: Array.from(markdownPaths).sort(),
+      gps: gps ? { ...gps, source: "exif" } : existing?.gps,
+    };
+
+    await this.writeJsonFile(IMAGE_METADATA_LOG, metadata);
   }
 
   private async uploadToR2WithRetry(
@@ -1302,6 +1639,10 @@ export default class R2MediaSyncPlugin extends Plugin {
     return this.readJsonFile<Record<string, UploadHistoryEntry>>(UPLOAD_HISTORY_LOG, {});
   }
 
+  private async readImageMetadata(): Promise<Record<string, ImageMetadataEntry>> {
+    return this.readJsonFile<Record<string, ImageMetadataEntry>>(IMAGE_METADATA_LOG, {});
+  }
+
   private async readFailedUploads(): Promise<FailedUploadEntry[]> {
     return this.readJsonFile<FailedUploadEntry[]>(FAILED_UPLOAD_LOG, []);
   }
@@ -1362,6 +1703,15 @@ class DashboardModal extends Modal {
         } finally {
           scanButton.disabled = false;
         }
+      })();
+    });
+
+    const repairButton = actions.createEl("button", { text: this.plugin.t("dashboardRepairButton") });
+    repairButton.addEventListener("click", () => {
+      void (async () => {
+        repairButton.disabled = true;
+        await this.plugin.repairMissingLocalImageLinks(true);
+        await this.render();
       })();
     });
 
