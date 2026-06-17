@@ -1,5 +1,11 @@
 # R2 Media Sync
 
+[![GitHub Release](https://img.shields.io/github/v/release/fab34/cloudflare-media-sync?logo=github&color=blue)](https://github.com/fab34/cloudflare-media-sync/releases)
+[![Obsidian Version](https://img.shields.io/badge/Obsidian-v1.6.6+-purple?logo=obsidian)](https://obsidian.md/)
+[![Obsidian Downloads](https://img.shields.io/badge/dynamic/json?logo=obsidian&color=3f1b63&label=downloads&query=%24%5B%22cloudflare-media-sync%22%5D.downloads&url=https%3A%2F%2Fraw.githubusercontent.com%2Fobsidianmd%2Fobsidian-releases%2Fmaster%2Fcommunity-plugin-stats.json)](https://community.obsidian.md/plugins/cloudflare-media-sync)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![GitHub Issues](https://img.shields.io/github/issues/fab34/cloudflare-media-sync)](https://github.com/fab34/cloudflare-media-sync/issues)
+
 R2 Media Sync 是一個 Obsidian 外掛，用來自動將 Markdown 筆記中引用的本機圖片上傳到 Cloudflare R2，並把筆記中的圖片連結改寫成公開的 R2 URL。上傳成功後，也可以選擇再處理本機檔案。
 
 它特別適合這類流程：

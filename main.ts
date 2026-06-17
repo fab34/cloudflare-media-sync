@@ -7,7 +7,6 @@ import {
   PluginSettingTab,
   requestUrl,
   Setting,
-  SettingDefinitionItem,
   setIcon,
   TFile,
   TFolder,
@@ -444,7 +443,7 @@ async function hmacSha256(key: ArrayBuffer, value: string): Promise<ArrayBuffer>
 }
 
 function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => globalThis.setTimeout(resolve, ms));
+  return new Promise((resolve) => window.setTimeout(resolve, ms));
 }
 
 function encodeKey(value: string): string {
@@ -826,7 +825,7 @@ interface DashboardData {
 
 export default class R2MediaSyncPlugin extends Plugin {
   settings: R2MediaSyncSettings;
-  private queue = new Map<string, ReturnType<typeof globalThis.setTimeout>>();
+  private queue = new Map<string, any>();
   private processing = new Set<string>();
   private pendingRescan = new Set<string>();
   private ignoreNextModify = new Set<string>();
@@ -951,7 +950,7 @@ export default class R2MediaSyncPlugin extends Plugin {
 
   onunload(): void {
     for (const timeoutId of this.queue.values()) {
-      globalThis.clearTimeout(timeoutId);
+      window.clearTimeout(timeoutId);
     }
     this.queue.clear();
   }
@@ -1084,8 +1083,8 @@ export default class R2MediaSyncPlugin extends Plugin {
 
   private enqueue(path: string, delayMs: number): void {
     const previous = this.queue.get(path);
-    if (previous) globalThis.clearTimeout(previous);
-    const timeoutId = globalThis.setTimeout(() => {
+    if (previous) window.clearTimeout(previous);
+    const timeoutId = window.setTimeout(() => {
       void (async () => {
         this.queue.delete(path);
         const file = this.app.vault.getAbstractFileByPath(path);
@@ -1867,16 +1866,11 @@ class R2MediaSyncSettingTab extends PluginSettingTab {
     this.plugin = plugin;
   }
 
-  getSettingDefinitions(): SettingDefinitionItem[] {
-    return [{
-      name: "R2 Media Sync",
-      searchable: false,
-      render: (setting: Setting) => {
-        setting.settingEl.empty();
-        const containerEl = setting.settingEl.createDiv({ cls: "r2-media-sync-settings" });
-        this.renderSettings(containerEl);
-      },
-    }];
+  display(): void {
+    const { containerEl } = this;
+    containerEl.empty();
+    const settingsDiv = containerEl.createDiv({ cls: "r2-media-sync-settings" });
+    this.renderSettings(settingsDiv);
   }
 
   private renderSettings(containerEl: HTMLElement): void {
