@@ -861,10 +861,7 @@ export default class R2MediaSyncPlugin extends Plugin {
       },
     });
 
-    if (Platform.isMobile) {
-      new Notice(`R2 Media Sync: ${this.t("mobileManualOnly")}`);
-      return;
-    }
+    // Mobile runs with full features, including auto-monitoring and local cleanup.
 
     this.addCommand({
       id: "scan-configured-scope",
@@ -1131,7 +1128,6 @@ export default class R2MediaSyncPlugin extends Plugin {
   private async getEffectiveSettings(): Promise<R2MediaSyncSettings> {
     const mobileOverrides: Partial<R2MediaSyncSettings> = this.isMobileRuntime()
       ? {
-          deleteLocalAfterUpload: false,
           processOnStartup: false,
         }
       : {};
@@ -2006,11 +2002,7 @@ class R2MediaSyncSettingTab extends PluginSettingTab {
           await this.plugin.saveSettings();
         }));
 
-    if (Platform.isMobile) {
-      const status = containerEl.createDiv({ cls: "r2-media-sync-status" });
-      status.setText(this.plugin.t("mobileManualOnly"));
-      return;
-    }
+    // Mobile settings tab displays all advanced settings.
 
     new Setting(containerEl)
       .setName(this.plugin.t("scanStartupName"))
