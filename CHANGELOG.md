@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.4
+
+- Fix: Replace settings tab `this.update()` with standard `this.display()` for older Obsidian version compatibility (down to `v1.6.6+`).
+- Fix: Eliminate TypeScript unsafe-argument/unsafe-assignment linter warnings by specifying types for the internal timeout queue map.
+
 ## 0.3.3
 
 - Fix: Resolve Obsidian API compatibility issues (getSettingDefinitions) and replace `globalThis` with `window` for popout window compatibility.
