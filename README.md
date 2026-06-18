@@ -10,6 +10,11 @@ R2 Media Sync is an Obsidian plugin that automatically uploads local media asset
 
 It is designed for workflows where other tools create local image files inside your vault, such as PDF-to-Markdown converters, document importers, AI assistants, or batch import tools.
 
+## User Guide
+
+- [English user guide](docs/USER_GUIDE.md)
+- [繁體中文使用手冊](docs/USER_GUIDE-zh.md)
+
 ## Recent Updates (v0.4 beta)
 
 - **Standalone uploader flow**: R2 Media Sync can upload pasted images, dropped images, selected image files, and existing local image links without requiring EzImage.
