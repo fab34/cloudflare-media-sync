@@ -1,7 +1,7 @@
 {
   "id": "cloudflare-media-sync",
   "name": "R2 Media Sync",
-  "version": "0.4.0-beta.5",
+  "version": "0.4.0-beta.6",
   "minAppVersion": "1.12.7",
   "description": "Automatically upload local media assets to Cloudflare R2 and rewrite Markdown links.",
   "author": "fab34",

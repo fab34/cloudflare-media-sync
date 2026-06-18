@@ -1158,7 +1158,11 @@ export default class R2MediaSyncPlugin extends Plugin {
 
   private isPathInScope(path: string): boolean {
     const normalized = normalizePath(path);
-    const excludedFolders = [this.app.vault.configDir, ...this.settings.excludeFolders];
+    const excludedFolders = [
+      this.app.vault.configDir,
+      this.getReviewFolderRoot(this.settings.localCleanupFolder),
+      ...this.settings.excludeFolders,
+    ];
     for (const folder of excludedFolders) {
       const clean = normalizePath(folder);
       if (clean && (normalized === clean || normalized.startsWith(`${clean}/`))) return false;
@@ -1436,6 +1440,11 @@ export default class R2MediaSyncPlugin extends Plugin {
 
   private async cleanupLocalImage(image: TFile, settings: R2MediaSyncSettings): Promise<void> {
     if (settings.localCleanupMode === "folder") {
+      if (this.isInReviewFolderPath(image.path, settings.localCleanupFolder)) {
+        this.updateStatus(this.t("movedToReviewFolder", { path: image.path }));
+        return;
+      }
+
       const target = await this.nextReviewFolderPath(image, settings.localCleanupFolder);
       await this.ensureFolder(target.parentPath);
       await this.app.vault.rename(image, target.filePath);
@@ -1468,7 +1477,7 @@ export default class R2MediaSyncPlugin extends Plugin {
   }
 
   private async nextReviewFolderPath(image: TFile, folder: string): Promise<{ parentPath: string; filePath: string }> {
-    const root = normalizePath(folder || DEFAULT_SETTINGS.localCleanupFolder).replace(/^\/+|\/+$/g, "");
+    const root = this.getReviewFolderRoot(folder);
     const rawTarget = normalizePath(`${root}/${image.path}`);
     const parentPath = rawTarget.includes("/") ? rawTarget.slice(0, rawTarget.lastIndexOf("/")) : "";
     const ext = image.extension ? `.${image.extension}` : "";
@@ -1487,6 +1496,16 @@ export default class R2MediaSyncPlugin extends Plugin {
     };
   }
 
+  private getReviewFolderRoot(folder?: string): string {
+    return normalizePath(folder || DEFAULT_SETTINGS.localCleanupFolder).replace(/^\/+|\/+$/g, "");
+  }
+
+  private isInReviewFolderPath(path: string, folder?: string): boolean {
+    const root = this.getReviewFolderRoot(folder);
+    const normalized = normalizePath(path);
+    return Boolean(root && (normalized === root || normalized.startsWith(`${root}/`)));
+  }
+
   private async ensureFolder(path: string): Promise<void> {
     const normalized = normalizePath(path).replace(/^\/+|\/+$/g, "");
     if (!normalized) return;
@@ -1501,14 +1520,14 @@ export default class R2MediaSyncPlugin extends Plugin {
   }
 
   private getReviewFolderFiles(): TFile[] {
-    const root = normalizePath(this.settings.localCleanupFolder || DEFAULT_SETTINGS.localCleanupFolder).replace(/^\/+|\/+$/g, "");
+    const root = this.getReviewFolderRoot(this.settings.localCleanupFolder);
     if (!root) return [];
     return this.app.vault.getFiles().filter((file) => file.path === root || file.path.startsWith(`${root}/`));
   }
 
   private async clearReviewFolder(files: TFile[]): Promise<number> {
     let count = 0;
-    for (const file of files) {
+    for (const file of files.slice().sort((a, b) => b.path.length - a.path.length)) {
       const current = this.app.vault.getAbstractFileByPath(file.path);
       if (current instanceof TFile) {
         await this.trashLocalFile(current);
