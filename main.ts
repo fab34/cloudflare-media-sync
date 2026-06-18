@@ -1380,6 +1380,7 @@ export default class R2MediaSyncPlugin extends Plugin {
       }
       this.ignoreNextModify.add(markdownFile.path);
       await this.app.vault.modify(markdownFile, rewritten);
+      this.enqueueRewriteVerification(markdownFile.path);
 
       if (settings.deleteLocalAfterUpload) {
         const uniqueImages = Array.from(new Map(replacements.map((item) => [item.image.path, item.image])).values());
@@ -1429,6 +1430,17 @@ export default class R2MediaSyncPlugin extends Plugin {
     }
 
     await this.trashLocalFile(image);
+  }
+
+  private enqueueRewriteVerification(path: string): void {
+    window.setTimeout(() => {
+      void (async () => {
+        const current = this.app.vault.getAbstractFileByPath(path);
+        if (current instanceof TFile && !this.processing.has(current.path)) {
+          await this.processFile(current, false);
+        }
+      })();
+    }, Math.max(2500, Math.min(this.settings.debounceMs, 5000)));
   }
 
   private async trashLocalFile(file: TFile): Promise<void> {
