@@ -5,6 +5,7 @@ import {
   Platform,
   Plugin,
   PluginSettingTab,
+  MarkdownView,
   requestUrl,
   Setting,
   SettingDefinitionItem,
@@ -38,6 +39,8 @@ interface R2MediaSyncSettings {
   reuseUploadedByHash: boolean;
   processMarkdownImages: boolean;
   processWikiImages: boolean;
+  processEditorPaste: boolean;
+  processEditorDrop: boolean;
   processOnStartup: boolean;
   scanScopeMode: ScanScopeMode;
   includeFolders: string[];
@@ -76,6 +79,8 @@ const DEFAULT_SETTINGS: R2MediaSyncSettings = {
   reuseUploadedByHash: true,
   processMarkdownImages: true,
   processWikiImages: true,
+  processEditorPaste: true,
+  processEditorDrop: true,
   processOnStartup: false,
   scanScopeMode: "vault",
   includeFolders: ["AI 工作區"],
@@ -99,6 +104,8 @@ const SETTING_KEYS = new Set<keyof R2MediaSyncSettings>([
   "reuseUploadedByHash",
   "processMarkdownImages",
   "processWikiImages",
+  "processEditorPaste",
+  "processEditorDrop",
   "processOnStartup",
   "scanScopeMode",
   "includeFolders",
@@ -227,6 +234,10 @@ const TEXT = {
     processMarkdownDesc: "Process links like ![](image.png).",
     processWikiName: "Process wiki image embeds",
     processWikiDesc: "Process links like ![[image.png]].",
+    processPasteName: "Upload pasted images",
+    processPasteDesc: "After Obsidian inserts a pasted image into the current note, upload it to R2 and rewrite the link.",
+    processDropName: "Upload dropped images",
+    processDropDesc: "After Obsidian inserts a dropped image into the current note, upload it to R2 and rewrite the link.",
     scanStartupName: "Scan on startup",
     scanStartupDesc: "Off by default. Enable after testing your R2 settings and scan scope.",
     scanScopeName: "Scan scope",
@@ -355,6 +366,10 @@ const TEXT = {
     processMarkdownDesc: "處理 ![](image.png) 這類連結。",
     processWikiName: "處理 Wiki 圖片嵌入",
     processWikiDesc: "處理 ![[image.png]] 這類連結。",
+    processPasteName: "貼上圖片後自動上傳",
+    processPasteDesc: "Obsidian 將貼上的圖片插入目前筆記後，自動上傳到 R2 並改寫連結。",
+    processDropName: "拖曳圖片後自動上傳",
+    processDropDesc: "Obsidian 將拖曳的圖片插入目前筆記後，自動上傳到 R2 並改寫連結。",
     scanStartupName: "啟動時掃描",
     scanStartupDesc: "預設關閉。請先測試 R2 設定與掃描範圍後再啟用。",
     scanScopeName: "掃描範圍",
@@ -702,6 +717,12 @@ function parseStoredSettings(value: unknown): Partial<R2MediaSyncSettings> {
       case "processWikiImages":
         if (typeof raw === "boolean") parsed.processWikiImages = raw;
         break;
+      case "processEditorPaste":
+        if (typeof raw === "boolean") parsed.processEditorPaste = raw;
+        break;
+      case "processEditorDrop":
+        if (typeof raw === "boolean") parsed.processEditorDrop = raw;
+        break;
       case "processOnStartup":
         if (typeof raw === "boolean") parsed.processOnStartup = raw;
         break;
@@ -941,6 +962,12 @@ export default class R2MediaSyncPlugin extends Plugin {
     });
     this.registerEvent(this.app.vault.on("create", (file) => this.handleVaultEvent(file)));
     this.registerEvent(this.app.vault.on("modify", (file) => this.handleVaultEvent(file)));
+    this.registerEvent(this.app.workspace.on("editor-paste", (_event: ClipboardEvent, _editor: unknown, view: MarkdownView) => {
+      if (this.settings.processEditorPaste) this.enqueueEditorImageUpload(view);
+    }));
+    this.registerEvent(this.app.workspace.on("editor-drop", (_event: DragEvent, _editor: unknown, view: MarkdownView) => {
+      if (this.settings.processEditorDrop) this.enqueueEditorImageUpload(view);
+    }));
 
     this.app.workspace.onLayoutReady(() => {
       if (!this.isMobileRuntime() && this.settings.processOnStartup) {
@@ -1093,6 +1120,12 @@ export default class R2MediaSyncPlugin extends Plugin {
       })();
     }, Math.max(500, delayMs)) as unknown as number;
     this.queue.set(path, timeoutId);
+  }
+
+  private enqueueEditorImageUpload(view: MarkdownView | null | undefined): void {
+    const file = view?.file ?? this.app.workspace.getActiveFile();
+    if (!file || file.extension !== "md" || !this.isPathInScope(file.path)) return;
+    this.enqueue(file.path, Math.min(Math.max(this.settings.debounceMs, 1200), 2500));
   }
 
   async scanConfiguredScope(manual: boolean): Promise<{ scanned: number; uploaded: number }> {
@@ -1999,6 +2032,26 @@ class R2MediaSyncSettingTab extends PluginSettingTab {
         .setValue(this.plugin.settings.processWikiImages)
         .onChange(async (value) => {
           this.plugin.settings.processWikiImages = value;
+          await this.plugin.saveSettings();
+        }));
+
+    new Setting(containerEl)
+      .setName(this.plugin.t("processPasteName"))
+      .setDesc(this.plugin.t("processPasteDesc"))
+      .addToggle((toggle) => toggle
+        .setValue(this.plugin.settings.processEditorPaste)
+        .onChange(async (value) => {
+          this.plugin.settings.processEditorPaste = value;
+          await this.plugin.saveSettings();
+        }));
+
+    new Setting(containerEl)
+      .setName(this.plugin.t("processDropName"))
+      .setDesc(this.plugin.t("processDropDesc"))
+      .addToggle((toggle) => toggle
+        .setValue(this.plugin.settings.processEditorDrop)
+        .onChange(async (value) => {
+          this.plugin.settings.processEditorDrop = value;
           await this.plugin.saveSettings();
         }));
 
