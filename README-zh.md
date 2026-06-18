@@ -19,6 +19,7 @@ R2 Media Sync 是一個 Obsidian 外掛，用來自動將 Markdown 筆記中引�
 
 - **獨立上傳流程**：R2 Media Sync 現在可自行處理貼上圖片、拖曳圖片、選擇圖片檔，以及 Markdown 中既有的本機圖片連結，不需要依賴 EzImage。
 - **選擇圖片檔並上傳**：新增命令面板指令，可直接從裝置選擇圖片，上傳到 R2 後把 Markdown 圖片連結插入目前筆記。
+- **選檔插入格式可設定**：選檔上傳後可插入 Markdown 圖片、Markdown 連結或純 URL。
 - **延遲改寫驗證**：針對貼上與拖曳流程增加延遲確認，避免 Obsidian 編輯器稍後覆蓋已改寫好的 R2 URL。
 - **更安全的本機清理設定**：啟用本機清理後，清理方式與檢查資料夾欄位會固定顯示，包含較舊 Obsidian 版本的 BRAT 測試環境。
 
@@ -56,6 +57,7 @@ R2 Media Sync 是一個可獨立運作的 Cloudflare R2 圖片上傳外掛。
 - 貼上圖片後自動上傳到 R2 並改寫連結
 - 拖曳圖片後自動上傳到 R2 並改寫連結
 - 可從命令面板選擇圖片檔，上傳後插入 R2 Markdown 圖片連結
+- 選檔上傳可設定插入 Markdown 圖片、Markdown 連結或純 URL
 - 支援偵測：
   - `![](image.png)`
   - `![[image.png]]`
@@ -206,6 +208,14 @@ fab34/cloudflare-media-sync
 
 - `Reuse uploads by file hash`：避免同樣內容重複上傳
 - `Upload retry attempts`：上傳失敗時自動重試
+
+### 選檔上傳
+
+`Upload selected image files` 指令可選擇插入格式：
+
+- Markdown 圖片：`![image](https://example.com/image.png)`
+- Markdown 連結：`[image](https://example.com/image.png)`
+- 純 URL：`https://example.com/image.png`
 
 ### 本機清理
 

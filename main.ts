@@ -19,6 +19,7 @@ type ConfigSource = "manual" | "ezimage";
 type ScanScopeMode = "vault" | "folders";
 type UiLanguage = "auto" | "en" | "zh-TW";
 type LocalCleanupMode = "trash" | "folder";
+type SelectedUploadFormat = "markdown-image" | "markdown-link" | "plain-url";
 type TextSettingKey = keyof Pick<
   R2MediaSyncSettings,
   "accountId" | "accessKeyId" | "secretAccessKey" | "bucketName" | "publicUrl" | "pathTemplate" | "localCleanupFolder"
@@ -41,6 +42,7 @@ interface R2MediaSyncSettings {
   processWikiImages: boolean;
   processEditorPaste: boolean;
   processEditorDrop: boolean;
+  selectedUploadFormat: SelectedUploadFormat;
   processOnStartup: boolean;
   scanScopeMode: ScanScopeMode;
   includeFolders: string[];
@@ -81,6 +83,7 @@ const DEFAULT_SETTINGS: R2MediaSyncSettings = {
   processWikiImages: true,
   processEditorPaste: true,
   processEditorDrop: true,
+  selectedUploadFormat: "markdown-image",
   processOnStartup: false,
   scanScopeMode: "vault",
   includeFolders: ["AI 工作區"],
@@ -106,6 +109,7 @@ const SETTING_KEYS = new Set<keyof R2MediaSyncSettings>([
   "processWikiImages",
   "processEditorPaste",
   "processEditorDrop",
+  "selectedUploadFormat",
   "processOnStartup",
   "scanScopeMode",
   "includeFolders",
@@ -241,6 +245,11 @@ const TEXT = {
     processPasteDesc: "After Obsidian inserts a pasted image into the current note, upload it to R2 and rewrite the link.",
     processDropName: "Upload dropped images",
     processDropDesc: "After Obsidian inserts a dropped image into the current note, upload it to R2 and rewrite the link.",
+    selectedUploadFormatName: "Selected file insert format",
+    selectedUploadFormatDesc: "Choose what the selected-file upload command inserts into the active note.",
+    selectedUploadMarkdownImage: "Markdown image",
+    selectedUploadMarkdownLink: "Markdown link",
+    selectedUploadPlainUrl: "Plain URL",
     scanStartupName: "Scan on startup",
     scanStartupDesc: "Off by default. Enable after testing your R2 settings and scan scope.",
     scanScopeName: "Scan scope",
@@ -376,6 +385,11 @@ const TEXT = {
     processPasteDesc: "Obsidian 將貼上的圖片插入目前筆記後，自動上傳到 R2 並改寫連結。",
     processDropName: "拖曳圖片後自動上傳",
     processDropDesc: "Obsidian 將拖曳的圖片插入目前筆記後，自動上傳到 R2 並改寫連結。",
+    selectedUploadFormatName: "選檔上傳插入格式",
+    selectedUploadFormatDesc: "選擇「選擇圖片檔並上傳」指令要插入目前筆記的格式。",
+    selectedUploadMarkdownImage: "Markdown 圖片",
+    selectedUploadMarkdownLink: "Markdown 連結",
+    selectedUploadPlainUrl: "純 URL",
     scanStartupName: "啟動時掃描",
     scanStartupDesc: "預設關閉。請先測試 R2 設定與掃描範圍後再啟用。",
     scanScopeName: "掃描範圍",
@@ -700,6 +714,9 @@ function parseStoredSettings(value: unknown): Partial<R2MediaSyncSettings> {
         break;
       case "localCleanupMode":
         if (raw === "trash" || raw === "folder") parsed.localCleanupMode = raw;
+        break;
+      case "selectedUploadFormat":
+        if (raw === "markdown-image" || raw === "markdown-link" || raw === "plain-url") parsed.selectedUploadFormat = raw;
         break;
       case "includeFolders":
         if (Array.isArray(raw) && raw.every((item) => typeof item === "string")) {
@@ -1593,7 +1610,7 @@ export default class R2MediaSyncPlugin extends Plugin {
         const links: string[] = [];
         for (const file of files) {
           const url = await this.uploadBrowserFile(file, settings, markdownFile.path);
-          links.push(`![${sanitizeMarkdownImageAlt(file.name.replace(/\.[^.]+$/, ""))}](${url})`);
+          links.push(this.formatSelectedUploadLink(file.name, url));
         }
 
         view.editor.replaceSelection(`${links.join("\n")}\n`);
@@ -1602,6 +1619,19 @@ export default class R2MediaSyncPlugin extends Plugin {
       })().catch((error) => this.reportError(this.t("syncFailed"), error, true));
     });
     input.click();
+  }
+
+  private formatSelectedUploadLink(fileName: string, url: string): string {
+    const label = sanitizeMarkdownImageAlt(fileName.replace(/\.[^.]+$/, ""));
+    switch (this.settings.selectedUploadFormat) {
+      case "markdown-link":
+        return `[${label}](${url})`;
+      case "plain-url":
+        return url;
+      case "markdown-image":
+      default:
+        return `![${label}](${url})`;
+    }
   }
 
   private async uploadBrowserFile(file: File, settings: R2MediaSyncSettings, markdownPath: string): Promise<string> {
@@ -2195,6 +2225,19 @@ class R2MediaSyncSettingTab extends PluginSettingTab {
         .setValue(this.plugin.settings.processEditorDrop)
         .onChange(async (value) => {
           this.plugin.settings.processEditorDrop = value;
+          await this.plugin.saveSettings();
+        }));
+
+    new Setting(containerEl)
+      .setName(this.plugin.t("selectedUploadFormatName"))
+      .setDesc(this.plugin.t("selectedUploadFormatDesc"))
+      .addDropdown((dropdown) => dropdown
+        .addOption("markdown-image", this.plugin.t("selectedUploadMarkdownImage"))
+        .addOption("markdown-link", this.plugin.t("selectedUploadMarkdownLink"))
+        .addOption("plain-url", this.plugin.t("selectedUploadPlainUrl"))
+        .setValue(this.plugin.settings.selectedUploadFormat)
+        .onChange(async (value: SelectedUploadFormat) => {
+          this.plugin.settings.selectedUploadFormat = value;
           await this.plugin.saveSettings();
         }));
 

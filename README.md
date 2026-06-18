@@ -14,6 +14,7 @@ It is designed for workflows where other tools create local image files inside y
 
 - **Standalone uploader flow**: R2 Media Sync can upload pasted images, dropped images, selected image files, and existing local image links without requiring EzImage.
 - **Selected file upload command**: Added a command to choose image files from your device and insert R2 Markdown image links into the active note.
+- **Configurable selected-file insertion**: Selected-file uploads can insert a Markdown image, Markdown link, or plain URL.
 - **Delayed rewrite verification**: Added a verification pass for paste/drop workflows so Obsidian editor timing does not overwrite the rewritten R2 URL.
 - **Safer local cleanup controls**: Cleanup mode and review-folder settings remain visible when local cleanup is enabled, including on older Obsidian versions used for BRAT testing.
 
@@ -49,6 +50,7 @@ In short:
 - Uploads pasted images after Obsidian inserts them into the current note.
 - Uploads dropped images after Obsidian inserts them into the current note.
 - Uploads selected image files from the command palette and inserts R2 Markdown image links.
+- Lets selected-file uploads insert a Markdown image, Markdown link, or plain URL.
 - Detects local image links:
   - `![](image.png)`
   - `![[image.png]]`
@@ -228,6 +230,14 @@ Manual fields:
 
 - `Reuse uploads by file hash`: avoids uploading identical image content more than once by storing a local hash-to-URL history.
 - `Upload retry attempts`: retries each R2 upload before the image is recorded in the failed upload log.
+
+### Selected File Uploads
+
+The `Upload selected image files` command can insert one of three formats:
+
+- Markdown image: `![image](https://example.com/image.png)`
+- Markdown link: `[image](https://example.com/image.png)`
+- Plain URL: `https://example.com/image.png`
 
 ### Local Cleanup
 

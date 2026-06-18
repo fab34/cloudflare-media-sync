@@ -1,6 +1,6 @@
 {
   "name": "obsidian-cloudflare-media-sync",
-  "version": "0.4.0-beta.6",
+  "version": "0.4.0-beta.7",
   "description": "Automatically upload local media assets to Cloudflare R2 and rewrite Markdown links.",
   "main": "main.js",
   "scripts": {
