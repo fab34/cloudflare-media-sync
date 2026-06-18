@@ -2013,14 +2013,12 @@ class R2MediaSyncSettingTab extends PluginSettingTab {
           this.update();
         }));
 
-    if (this.plugin.settings.localCleanupMode === "folder") {
-      this.addTextSetting(
-        this.plugin.t("cleanupFolderName"),
-        this.plugin.t("cleanupFolderDesc"),
-        "localCleanupFolder",
-        containerEl,
-      );
-    }
+    this.addTextSetting(
+      this.plugin.t("cleanupFolderName"),
+      this.plugin.t("cleanupFolderDesc"),
+      "localCleanupFolder",
+      containerEl,
+    );
 
     new Setting(containerEl)
       .setName(this.plugin.t("reuseHashName"))
