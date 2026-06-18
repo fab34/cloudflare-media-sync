@@ -1912,6 +1912,13 @@ class R2MediaSyncSettingTab extends PluginSettingTab {
     }];
   }
 
+  display(): void {
+    const { containerEl } = this;
+    containerEl.empty();
+    const settingsEl = containerEl.createDiv({ cls: "r2-media-sync-settings" });
+    this.renderSettings(settingsEl);
+  }
+
   private renderSettings(containerEl: HTMLElement): void {
     containerEl.empty();
 
