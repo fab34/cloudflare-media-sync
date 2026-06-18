@@ -1,7 +1,7 @@
 # R2 Media Sync
 
 [![GitHub Release](https://img.shields.io/github/v/release/fab34/cloudflare-media-sync?logo=github&color=blue)](https://github.com/fab34/cloudflare-media-sync/releases)
-[![Obsidian Version](https://img.shields.io/badge/Obsidian-v1.13.0+-purple?logo=obsidian)](https://obsidian.md/)
+[![Obsidian Version](https://img.shields.io/badge/Obsidian-v1.12.7+-purple?logo=obsidian)](https://obsidian.md/)
 [![Obsidian Downloads](https://img.shields.io/badge/dynamic/json?logo=obsidian&color=3f1b63&label=downloads&query=%24%5B%22cloudflare-media-sync%22%5D.downloads&url=https%3A%2F%2Fraw.githubusercontent.com%2Fobsidianmd%2Fobsidian-releases%2Fmaster%2Fcommunity-plugin-stats.json)](https://community.obsidian.md/plugins/cloudflare-media-sync)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![GitHub Issues](https://img.shields.io/github/issues/fab34/cloudflare-media-sync)](https://github.com/fab34/cloudflare-media-sync/issues)
@@ -15,7 +15,7 @@ It is designed for workflows where other tools create local image files inside y
 - [English user guide](docs/USER_GUIDE.md)
 - [繁體中文使用手冊](docs/USER_GUIDE-zh.md)
 
-## Recent Updates (v0.4 beta)
+## Recent Updates (v0.4.0)
 
 - **Standalone uploader flow**: R2 Media Sync can upload pasted images, dropped images, selected image files, and existing local image links without requiring EzImage.
 - **Selected file upload command**: Added a command to choose image files from your device and insert R2 Markdown image links into the active note.

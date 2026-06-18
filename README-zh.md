@@ -1,7 +1,7 @@
 # R2 Media Sync
 
 [![GitHub Release](https://img.shields.io/github/v/release/fab34/cloudflare-media-sync?logo=github&color=blue)](https://github.com/fab34/cloudflare-media-sync/releases)
-[![Obsidian Version](https://img.shields.io/badge/Obsidian-v1.13.0+-purple?logo=obsidian)](https://obsidian.md/)
+[![Obsidian Version](https://img.shields.io/badge/Obsidian-v1.12.7+-purple?logo=obsidian)](https://obsidian.md/)
 [![Obsidian Downloads](https://img.shields.io/badge/dynamic/json?logo=obsidian&color=3f1b63&label=downloads&query=%24%5B%22cloudflare-media-sync%22%5D.downloads&url=https%3A%2F%2Fraw.githubusercontent.com%2Fobsidianmd%2Fobsidian-releases%2Fmaster%2Fcommunity-plugin-stats.json)](https://community.obsidian.md/plugins/cloudflare-media-sync)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![GitHub Issues](https://img.shields.io/github/issues/fab34/cloudflare-media-sync)](https://github.com/fab34/cloudflare-media-sync/issues)
@@ -20,7 +20,7 @@ R2 Media Sync 是一個 Obsidian 外掛，用來自動將 Markdown 筆記中引�
 - [繁體中文使用手冊](docs/USER_GUIDE-zh.md)
 - [English user guide](docs/USER_GUIDE.md)
 
-## 最近更新 (v0.4 beta)
+## 最近更新 (v0.4.0)
 
 - **獨立上傳流程**：R2 Media Sync 現在可自行處理貼上圖片、拖曳圖片、選擇圖片檔，以及 Markdown 中既有的本機圖片連結，不需要依賴 EzImage。
 - **選擇圖片檔並上傳**：新增命令面板指令，可直接從裝置選擇圖片，上傳到 R2 後把 Markdown 圖片連結插入目前筆記。

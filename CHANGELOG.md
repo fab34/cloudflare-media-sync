@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.4.0
+
+- Added standalone pasted-image and dropped-image upload flows.
+- Added a selected image file upload command.
+- Added configurable selected-file insertion formats: Markdown image, Markdown link, or plain URL.
+- Added delayed rewrite verification so Obsidian editor timing does not overwrite R2 URL rewrites.
+- Added safer review-folder cleanup handling to prevent nested review folders.
+- Added English and Traditional Chinese user guides.
+- Kept EzImage optional: R2 Media Sync can import or reuse EzImage settings, but does not require EzImage.
+
 ## 0.3.5
 
 - Raised the minimum app version to 1.13.0.
