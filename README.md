@@ -10,20 +10,25 @@ R2 Media Sync is an Obsidian plugin that automatically uploads local media asset
 
 It is designed for workflows where other tools create local image files inside your vault, such as PDF-to-Markdown converters, document importers, AI assistants, or batch import tools.
 
-## Recent Updates (v0.3.5)
+## Recent Updates (v0.4 beta)
 
-- **Obsidian API Compatibility**: Switch back to the official `getSettingDefinitions` settings layout API and raised the minimum app version to `v1.13.0+` to satisfy community submission guidelines.
-- **TypeScript Health**: Fixed linter warnings about unsafe assignment and argument passing on asynchronous queue items.
-- **Sync Dashboard (v0.3.3)**: Added a comprehensive synchronization dashboard showing sync status, scope statistics, history, failures, and maintenance controls.
-- **Popout Windows (v0.3.3)**: Fixed a popout compatibility bug by replacing `globalThis` with `window` globally.
+- **Standalone uploader flow**: R2 Media Sync can upload pasted images, dropped images, selected image files, and existing local image links without requiring EzImage.
+- **Selected file upload command**: Added a command to choose image files from your device and insert R2 Markdown image links into the active note.
+- **Delayed rewrite verification**: Added a verification pass for paste/drop workflows so Obsidian editor timing does not overwrite the rewritten R2 URL.
+- **Safer local cleanup controls**: Cleanup mode and review-folder settings remain visible when local cleanup is enabled, including on older Obsidian versions used for BRAT testing.
 
 ## How It Differs From Other Image Upload Plugins
 
-R2 Media Sync is not primarily a paste-image uploader.
+R2 Media Sync is a standalone Cloudflare R2 media uploader for Obsidian.
 
-Many Obsidian image upload plugins focus on the moment you paste, drag, or manually select an image. That workflow is already handled well by plugins such as EzImage.
+It can handle the common image-entry moments directly:
 
-R2 Media Sync focuses on the next problem: other tools may create image files directly inside your vault and insert local image links into Markdown. Common examples include:
+- pasted images
+- dropped images
+- selected image files
+- local image links that already exist in Markdown
+
+It also handles the next problem: other tools may create image files directly inside your vault and insert local image links into Markdown. Common examples include:
 
 - PDF-to-Markdown converters that extract page images into the note folder.
 - Document importers that generate local assets.
@@ -34,13 +39,16 @@ In those cases, paste/drag upload hooks never run. R2 Media Sync watches the res
 
 In short:
 
-- Use EzImage or a similar plugin for pasted/dragged images.
-- Use R2 Media Sync for generated or imported local images that already exist in your vault.
-- Use both together if you want pasted images and generated images to follow the same R2 storage strategy.
+- Use R2 Media Sync by itself for pasted, dropped, selected, generated, or imported local images.
+- EzImage is optional. R2 Media Sync can import or reuse EzImage's R2 settings, but does not require EzImage to upload images.
+- Companion plugins such as Geo Capture can optionally use R2 Media Sync's local metadata cache, but R2 Media Sync does not depend on them.
 
 ## What It Does
 
 - Watches newly created or modified Markdown files.
+- Uploads pasted images after Obsidian inserts them into the current note.
+- Uploads dropped images after Obsidian inserts them into the current note.
+- Uploads selected image files from the command palette and inserts R2 Markdown image links.
 - Detects local image links:
   - `![](image.png)`
   - `![[image.png]]`
@@ -88,6 +96,7 @@ Those files can clutter the vault and consume sync storage. R2 Media Sync cleans
 - Preserve JPEG GPS coordinates in a local metadata cache before rewriting images to R2 URLs, so companion tools such as Geo Capture can still use photo location data later.
 - Show the latest sync state in the Obsidian status bar.
 - Choose the plugin interface language: Auto, English, or Traditional Chinese.
+- Manual command to upload selected image files and insert R2 Markdown links.
 - Manual command to scan the current note.
 - Manual command to scan the configured scope.
 - Manual command to import EzImage settings.
@@ -279,13 +288,14 @@ Recommended exclusions:
 4. Wait for the local link to be rewritten to an R2 URL.
 5. Confirm the same note renders correctly on desktop before relying on the workflow for important captures.
 
-If you also use EzImage, note that EzImage's own local-save behavior may affect whether a local file remains in the vault after upload.
+EzImage is not required for this workflow. If you also use EzImage, note that EzImage's own local-save behavior may affect whether a local file remains in the vault after upload.
 
 ## Commands
 
 Open the command palette and search for `R2 Media Sync`.
 
 - `Upload local images in current note`
+- `Upload selected image files`
 - `Scan configured scope now`
 - `Import settings from EzImage`
 - `Show failed upload summary`

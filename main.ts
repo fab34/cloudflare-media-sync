@@ -166,6 +166,9 @@ const TEXT = {
     cmdClearReviewFolder: "Clear local review folder",
     cmdRepairMissingLinks: "Repair missing local image links",
     cmdOpenDashboard: "Open sync dashboard",
+    cmdUploadSelectedImages: "Upload selected image files",
+    noActiveMarkdownView: "Open a Markdown note before uploading selected image files.",
+    noImageFilesSelected: "No image files selected.",
     dashboardTitle: "Sync dashboard",
     dashboardLastStatus: "Last status",
     dashboardMarkdownInScope: "Markdown files in scope",
@@ -298,6 +301,9 @@ const TEXT = {
     cmdClearReviewFolder: "清理本機檢查資料夾",
     cmdRepairMissingLinks: "修復遺失的本機圖片連結",
     cmdOpenDashboard: "開啟同步儀表板",
+    cmdUploadSelectedImages: "選擇圖片檔並上傳",
+    noActiveMarkdownView: "請先開啟一篇 Markdown 筆記，再選擇圖片檔上傳。",
+    noImageFilesSelected: "沒有選擇圖片檔。",
     dashboardTitle: "同步儀表板",
     dashboardLastStatus: "最近狀態",
     dashboardMarkdownInScope: "掃描範圍內 Markdown 數",
@@ -879,6 +885,14 @@ export default class R2MediaSyncPlugin extends Plugin {
         } else {
           new Notice(`R2 Media Sync: ${this.t("noActiveNote")}`);
         }
+      },
+    });
+
+    this.addCommand({
+      id: "upload-selected-image-files",
+      name: this.t("cmdUploadSelectedImages"),
+      callback: async () => {
+        await this.uploadSelectedImageFiles();
       },
     });
 
@@ -1534,6 +1548,101 @@ export default class R2MediaSyncPlugin extends Plugin {
     }
     await this.recordImageMetadata(hash, file, key, url, markdownPath, gps);
     return url;
+  }
+
+  private async uploadSelectedImageFiles(): Promise<void> {
+    const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+    const markdownFile = view?.file;
+    if (!view || !markdownFile) {
+      new Notice(`R2 Media Sync: ${this.t("noActiveMarkdownView")}`);
+      return;
+    }
+
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = Array.from(IMAGE_EXTS).map((ext) => `.${ext}`).join(",");
+    input.multiple = true;
+    input.addEventListener("change", () => {
+      void (async () => {
+        const files = Array.from(input.files ?? []).filter((file) => IMAGE_EXTS.has((file.name.split(".").pop() ?? "").toLowerCase()));
+        if (!files.length) {
+          new Notice(`R2 Media Sync: ${this.t("noImageFilesSelected")}`);
+          return;
+        }
+
+        const settings = await this.getEffectiveSettings();
+        const links: string[] = [];
+        for (const file of files) {
+          const url = await this.uploadBrowserFile(file, settings, markdownFile.path);
+          links.push(`![${sanitizeMarkdownImageAlt(file.name.replace(/\.[^.]+$/, ""))}](${url})`);
+        }
+
+        view.editor.replaceSelection(`${links.join("\n")}\n`);
+        this.updateStatus(this.t("uploadedFor", { count: links.length, path: markdownFile.path }));
+        new Notice(`R2 Media Sync: ${this.t("uploadedNotice", { count: links.length })}`);
+      })().catch((error) => this.reportError(this.t("syncFailed"), error, true));
+    });
+    input.click();
+  }
+
+  private async uploadBrowserFile(file: File, settings: R2MediaSyncSettings, markdownPath: string): Promise<string> {
+    const data = await file.arrayBuffer();
+    const hash = await sha256Hex(data);
+    const gps = readExifGps(data);
+
+    if (settings.reuseUploadedByHash) {
+      const history = await this.readUploadHistory();
+      const existing = history[hash];
+      if (existing) {
+        await this.recordBrowserFileMetadata(hash, file, existing.key, existing.url, markdownPath, gps, existing.uploadedAt);
+        this.updateStatus(this.t("reusedUrl", { path: file.name }));
+        return existing.url;
+      }
+    }
+
+    const key = objectKeyFor(file.name, settings.pathTemplate);
+    const url = await this.uploadToR2WithRetry(data, file.name, key, settings, markdownPath, file.name);
+    if (settings.reuseUploadedByHash) {
+      const history = await this.readUploadHistory();
+      history[hash] = {
+        fileName: file.name,
+        key,
+        size: file.size,
+        uploadedAt: new Date().toISOString(),
+        url,
+      };
+      await this.writeJsonFile(UPLOAD_HISTORY_LOG, history);
+    }
+    await this.recordBrowserFileMetadata(hash, file, key, url, markdownPath, gps);
+    return url;
+  }
+
+  private async recordBrowserFileMetadata(
+    hash: string,
+    file: File,
+    key: string,
+    url: string,
+    markdownPath: string,
+    gps: GeoPoint | null,
+    uploadedAt = new Date().toISOString(),
+  ): Promise<void> {
+    const metadata = await this.readImageMetadata();
+    const existing = metadata[hash];
+    const markdownPaths = new Set([...(existing?.markdownPaths ?? []), markdownPath]);
+
+    metadata[hash] = {
+      fileName: file.name,
+      originalPath: `selected:${file.name}`,
+      hash,
+      key,
+      size: file.size,
+      uploadedAt: existing?.uploadedAt ?? uploadedAt,
+      url,
+      markdownPaths: Array.from(markdownPaths).sort(),
+      gps: gps ? { ...gps, source: "exif" } : existing?.gps,
+    };
+
+    await this.writeJsonFile(IMAGE_METADATA_LOG, metadata);
   }
 
   private async recordImageMetadata(

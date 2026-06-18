@@ -15,24 +15,25 @@ R2 Media Sync 是一個 Obsidian 外掛，用來自動將 Markdown 筆記中引�
 - AI 助手或自動化腳本會直接寫入 Markdown 與圖片
 - 批次搬移舊筆記時，留下大量本機圖片連結
 
-## 最近更新 (v0.3.5)
+## 最近更新 (v0.4 beta)
 
-- **Obsidian API 相容性**：切換回官方推薦的 `getSettingDefinitions` 設定面板 API，並將最小支援版本提升至 `v1.13.0+` 以符合社群審查規範。
-- **TypeScript 健全性**：消除非同步排程 queue 使用 `any` 所引發的 unsafe type 語法警告。
-- **同步儀表板 (v0.3.3)**：新增完整的同步資訊面板，可一目了然狀態、範圍統計、上傳歷史、失敗次數，並提供快速維護操作。
-- **彈出視窗相容 (v0.3.3)**：將程式碼中的 `globalThis` 全面改為 `window`，修復了在彈出視窗（popout window）下的相容性警告。
+- **獨立上傳流程**：R2 Media Sync 現在可自行處理貼上圖片、拖曳圖片、選擇圖片檔，以及 Markdown 中既有的本機圖片連結，不需要依賴 EzImage。
+- **選擇圖片檔並上傳**：新增命令面板指令，可直接從裝置選擇圖片，上傳到 R2 後把 Markdown 圖片連結插入目前筆記。
+- **延遲改寫驗證**：針對貼上與拖曳流程增加延遲確認，避免 Obsidian 編輯器稍後覆蓋已改寫好的 R2 URL。
+- **更安全的本機清理設定**：啟用本機清理後，清理方式與檢查資料夾欄位會固定顯示，包含較舊 Obsidian 版本的 BRAT 測試環境。
 
 ## 它和一般圖片上傳外掛的差異
 
-R2 Media Sync 不是以「貼上圖片當下」為主要場景。
+R2 Media Sync 是一個可獨立運作的 Cloudflare R2 圖片上傳外掛。
 
-像 EzImage 這類外掛，已經很適合處理：
+它可以直接處理常見的圖片進入筆記流程：
 
 - 貼上圖片
 - 拖拉圖片
-- 手動選檔上傳
+- 選擇圖片檔上傳
+- Markdown 中已存在的本機圖片連結
 
-R2 Media Sync 解決的是下一層問題：
+它同時也解決下一層問題：
 
 > 其他工具已經先把圖片寫進 vault，也已經把本機圖片連結寫進 Markdown，但這些流程不會觸發一般貼圖上傳外掛。
 
@@ -45,13 +46,16 @@ R2 Media Sync 解決的是下一層問題：
 
 簡單說：
 
-- 貼上 / 拖拉圖片：用 EzImage
-- 工具產生 / 匯入的本機圖片：用 R2 Media Sync
-- 兩者可以一起使用
+- R2 Media Sync 可以單獨處理貼上、拖曳、選檔、工具產生、匯入而來的本機圖片。
+- EzImage 是可選的。R2 Media Sync 可以匯入或讀取 EzImage 的 R2 設定，但不需要 EzImage 才能上傳圖片。
+- Geo Capture 這類協作外掛可以選擇讀取 R2 Media Sync 的本機 metadata cache，但 R2 Media Sync 本身不依賴它們。
 
 ## 功能
 
 - 監看新增或修改過的 Markdown 筆記
+- 貼上圖片後自動上傳到 R2 並改寫連結
+- 拖曳圖片後自動上傳到 R2 並改寫連結
+- 可從命令面板選擇圖片檔，上傳後插入 R2 Markdown 圖片連結
 - 支援偵測：
   - `![](image.png)`
   - `![[image.png]]`
@@ -67,6 +71,7 @@ R2 Media Sync 解決的是下一層問題：
 - 可從 upload history 修復遺失的本機圖片連結
 - 上傳 JPG/JPEG 前，會先擷取可用的 GPS 座標並寫入本機 metadata cache，方便 Geo Capture 等外掛在圖片改成 R2 URL 後仍可使用照片定位
 - 提供 Auto / English / Traditional Chinese 介面語言
+- 提供「選擇圖片檔並上傳」手動指令
 
 ## 目前手機端行為
 
@@ -230,13 +235,14 @@ fab34/cloudflare-media-sync
 4. 等待圖片連結改寫成 R2 URL
 5. 再到桌面端確認同一篇筆記是否正常顯示
 
-如果你也有使用 EzImage，要注意 EzImage 自己的本機保留策略，也會影響圖片是否還會留在 vault。
+此流程不需要安裝 EzImage。如果你也有使用 EzImage，要注意 EzImage 自己的本機保留策略，也會影響圖片是否還會留在 vault。
 
 ## 指令
 
 在命令面板搜尋 `R2 Media Sync`：
 
 - `Upload local images in current note`
+- `Upload selected image files`
 - `Scan configured scope now`
 - `Import settings from EzImage`
 - `Show failed upload summary`
