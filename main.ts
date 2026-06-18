@@ -2000,28 +2000,26 @@ class R2MediaSyncSettingTab extends PluginSettingTab {
           this.update();
         }));
 
-    if (this.plugin.settings.deleteLocalAfterUpload) {
-      new Setting(containerEl)
-        .setName(this.plugin.t("cleanupModeName"))
-        .setDesc(this.plugin.t("cleanupModeDesc"))
-        .addDropdown((dropdown) => dropdown
-          .addOption("trash", this.plugin.t("cleanupMoveToTrash"))
-          .addOption("folder", this.plugin.t("cleanupMoveToFolder"))
-          .setValue(this.plugin.settings.localCleanupMode)
-          .onChange(async (value: LocalCleanupMode) => {
-            this.plugin.settings.localCleanupMode = value;
-            await this.plugin.saveSettings();
-            this.update();
-          }));
+    new Setting(containerEl)
+      .setName(this.plugin.t("cleanupModeName"))
+      .setDesc(this.plugin.t("cleanupModeDesc"))
+      .addDropdown((dropdown) => dropdown
+        .addOption("trash", this.plugin.t("cleanupMoveToTrash"))
+        .addOption("folder", this.plugin.t("cleanupMoveToFolder"))
+        .setValue(this.plugin.settings.localCleanupMode)
+        .onChange(async (value: LocalCleanupMode) => {
+          this.plugin.settings.localCleanupMode = value;
+          await this.plugin.saveSettings();
+          this.update();
+        }));
 
-      if (this.plugin.settings.localCleanupMode === "folder") {
-        this.addTextSetting(
-          this.plugin.t("cleanupFolderName"),
-          this.plugin.t("cleanupFolderDesc"),
-          "localCleanupFolder",
-          containerEl,
-        );
-      }
+    if (this.plugin.settings.localCleanupMode === "folder") {
+      this.addTextSetting(
+        this.plugin.t("cleanupFolderName"),
+        this.plugin.t("cleanupFolderDesc"),
+        "localCleanupFolder",
+        containerEl,
+      );
     }
 
     new Setting(containerEl)
