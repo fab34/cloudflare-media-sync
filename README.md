@@ -15,8 +15,9 @@ It is designed for workflows where other tools create local image files inside y
 - [English user guide](docs/USER_GUIDE.md)
 - [繁體中文使用手冊](docs/USER_GUIDE-zh.md)
 
-## Recent Updates (v0.4.0)
+## Recent Updates (v0.4.1)
 
+- **Community review compatibility**: Removed newer settings APIs while keeping `minAppVersion` at `v1.12.7+`.
 - **Standalone uploader flow**: R2 Media Sync can upload pasted images, dropped images, selected image files, and existing local image links without requiring EzImage.
 - **Selected file upload command**: Added a command to choose image files from your device and insert R2 Markdown image links into the active note.
 - **Configurable selected-file insertion**: Selected-file uploads can insert a Markdown image, Markdown link, or plain URL.

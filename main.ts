@@ -8,7 +8,6 @@ import {
   MarkdownView,
   requestUrl,
   Setting,
-  SettingDefinitionItem,
   setIcon,
   TFile,
   TFolder,
@@ -993,11 +992,17 @@ export default class R2MediaSyncPlugin extends Plugin {
     });
     this.registerEvent(this.app.vault.on("create", (file) => this.handleVaultEvent(file)));
     this.registerEvent(this.app.vault.on("modify", (file) => this.handleVaultEvent(file)));
-    this.registerEvent(this.app.workspace.on("editor-paste", (_event: ClipboardEvent, _editor: unknown, view: MarkdownView) => {
-      if (this.settings.processEditorPaste) this.enqueueEditorImageUpload(view);
+    this.registerEvent(this.app.workspace.on("editor-paste", (event: ClipboardEvent, _editor: unknown, view: MarkdownView) => {
+      if (event.defaultPrevented) return;
+      if (!this.settings.processEditorPaste) return;
+      this.enqueueEditorImageUpload(view);
+      event.preventDefault();
     }));
-    this.registerEvent(this.app.workspace.on("editor-drop", (_event: DragEvent, _editor: unknown, view: MarkdownView) => {
-      if (this.settings.processEditorDrop) this.enqueueEditorImageUpload(view);
+    this.registerEvent(this.app.workspace.on("editor-drop", (event: DragEvent, _editor: unknown, view: MarkdownView) => {
+      if (event.defaultPrevented) return;
+      if (!this.settings.processEditorDrop) return;
+      this.enqueueEditorImageUpload(view);
+      event.preventDefault();
     }));
 
     this.app.workspace.onLayoutReady(() => {
@@ -1594,7 +1599,7 @@ export default class R2MediaSyncPlugin extends Plugin {
       return;
     }
 
-    const input = document.createElement("input");
+    const input = activeDocument.createElement("input");
     input.type = "file";
     input.accept = Array.from(IMAGE_EXTS).map((ext) => `.${ext}`).join(",");
     input.multiple = true;
@@ -2070,18 +2075,6 @@ class R2MediaSyncSettingTab extends PluginSettingTab {
     this.plugin = plugin;
   }
 
-  getSettingDefinitions(): SettingDefinitionItem[] {
-    return [{
-      name: "R2 Media Sync",
-      searchable: false,
-      render: (setting: Setting) => {
-        setting.settingEl.empty();
-        const containerEl = setting.settingEl.createDiv({ cls: "r2-media-sync-settings" });
-        this.renderSettings(containerEl);
-      },
-    }];
-  }
-
   display(): void {
     const { containerEl } = this;
     containerEl.empty();
@@ -2103,7 +2096,7 @@ class R2MediaSyncSettingTab extends PluginSettingTab {
         .onChange(async (value: UiLanguage) => {
           this.plugin.settings.uiLanguage = value;
           await this.plugin.saveSettings();
-          this.update();
+          this.display();
         }));
 
     new Setting(containerEl)
@@ -2116,7 +2109,7 @@ class R2MediaSyncSettingTab extends PluginSettingTab {
         .onChange(async (value: ConfigSource) => {
           this.plugin.settings.configSource = value;
           await this.plugin.saveSettings();
-          this.update();
+          this.display();
         }));
 
     new Setting(containerEl)
@@ -2126,7 +2119,7 @@ class R2MediaSyncSettingTab extends PluginSettingTab {
         .setButtonText(this.plugin.t("importButton"))
         .onClick(async () => {
           await this.plugin.importEzImageSettings(true);
-          this.update();
+          this.display();
         }));
 
     if (this.plugin.settings.configSource === "manual") {
@@ -2155,7 +2148,7 @@ class R2MediaSyncSettingTab extends PluginSettingTab {
           if (value) {
             new Notice(`R2 Media Sync: ${this.plugin.t("deleteEnabledNotice")}`);
           }
-          this.update();
+          this.display();
         }));
 
     new Setting(containerEl)
@@ -2168,7 +2161,7 @@ class R2MediaSyncSettingTab extends PluginSettingTab {
         .onChange(async (value: LocalCleanupMode) => {
           this.plugin.settings.localCleanupMode = value;
           await this.plugin.saveSettings();
-          this.update();
+          this.display();
         }));
 
     this.addTextSetting(
@@ -2263,7 +2256,7 @@ class R2MediaSyncSettingTab extends PluginSettingTab {
         .onChange(async (value: ScanScopeMode) => {
           this.plugin.settings.scanScopeMode = value;
           await this.plugin.saveSettings();
-          this.update();
+          this.display();
         }));
 
     if (this.plugin.settings.scanScopeMode === "folders") {
@@ -2323,7 +2316,7 @@ class R2MediaSyncSettingTab extends PluginSettingTab {
         .onClick(async () => {
           const result = await this.plugin.scanConfiguredScope(true);
           new Notice(`R2 Media Sync: ${this.plugin.t("scannedNotice", { scanned: result.scanned, uploaded: result.uploaded })}`);
-          this.update();
+          this.display();
         }));
 
     const status = containerEl.createDiv({ cls: "r2-media-sync-status" });

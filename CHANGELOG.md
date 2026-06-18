@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.1
+
+- Fixed community review error by removing newer settings APIs while keeping `minAppVersion` at `1.12.7`.
+- Replaced settings-tab refresh calls with older-version-compatible rendering.
+- Updated paste/drop event handlers to check `defaultPrevented` and call `preventDefault()` only when the plugin handles the event.
+- Replaced direct `document.createElement` usage with `activeDocument.createElement` for popout window compatibility.
+
 ## 0.4.0
 
 - Added standalone pasted-image and dropped-image upload flows.

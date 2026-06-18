@@ -20,8 +20,9 @@ R2 Media Sync 是一個 Obsidian 外掛，用來自動將 Markdown 筆記中引�
 - [繁體中文使用手冊](docs/USER_GUIDE-zh.md)
 - [English user guide](docs/USER_GUIDE.md)
 
-## 最近更新 (v0.4.0)
+## 最近更新 (v0.4.1)
 
+- **社群審核相容性**：移除較新的設定頁 API，同時維持 `minAppVersion` 為 `v1.12.7+`。
 - **獨立上傳流程**：R2 Media Sync 現在可自行處理貼上圖片、拖曳圖片、選擇圖片檔，以及 Markdown 中既有的本機圖片連結，不需要依賴 EzImage。
 - **選擇圖片檔並上傳**：新增命令面板指令，可直接從裝置選擇圖片，上傳到 R2 後把 Markdown 圖片連結插入目前筆記。
 - **選檔插入格式可設定**：選檔上傳後可插入 Markdown 圖片、Markdown 連結或純 URL。
