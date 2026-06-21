@@ -11,7 +11,7 @@ In short:
 1. A note references a local image.
 2. The plugin uploads that image to Cloudflare R2.
 3. The plugin rewrites the note to use the public R2 URL.
-4. If local cleanup is enabled, the plugin moves the original local image to trash or a review folder.
+4. If local image handling is enabled, the plugin moves the original local image to trash or a review folder.
 
 ## Good Use Cases
 
@@ -27,7 +27,7 @@ In short:
 Start conservatively:
 
 1. Set `R2 settings source` to `Manual` and enter your Cloudflare R2 settings.
-2. Keep `Delete local image after upload` disabled.
+2. Keep `Handle local image after upload` disabled.
 3. Keep `Scan on startup` disabled.
 4. Create a test note with one image.
 5. Run `R2 Media Sync: Upload local images in current note`.
@@ -176,18 +176,20 @@ Best for:
 
 ## Local Cleanup
 
-### Delete Local Image After Upload
+### Handle Local Image After Upload
 
 When enabled, the plugin handles the local image after it has uploaded successfully and the note link has been rewritten.
 
 Keep this disabled for your first tests.
 
-### Local Cleanup Mode
+This does not always mean immediate deletion. The exact behavior depends on the local image handling mode below.
+
+### Local Image Handling Mode
 
 Choose:
 
-- `Move to Obsidian trash`
-- `Move to review folder`
+- `Move to Obsidian trash`: removes the image from the vault through Obsidian's trash handling. This is cleaner, but needs more care with multi-device sync.
+- `Move to review folder`: moves the image into a safety staging folder such as `_r2_media_review`. Files there are not deleted automatically. Clear them from the dashboard after confirming other devices render the R2 URLs correctly.
 
 ### Move To Review Folder
 
@@ -306,7 +308,7 @@ Check:
 
 Possible reasons:
 
-- `Delete local image after upload` is disabled.
+- `Handle local image after upload` is disabled.
 - The note still contains local image links, so cleanup was skipped for safety.
 - Cleanup mode is `Move to review folder`, so the image is in `_r2_media_review`.
 
@@ -345,4 +347,3 @@ Yes. R2 Media Sync does not depend on Geo Capture.
 3. Confirm the link is rewritten to an R2 URL.
 4. Check the same note on desktop.
 5. Clear `_r2_media_review` later.
-

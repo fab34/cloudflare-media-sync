@@ -86,8 +86,8 @@ R2 Media Sync 是一個可獨立運作的 Cloudflare R2 圖片上傳外掛。
 R2 Media Sync 已全面支援 Obsidian 手機版（Mobile）。
 
 - **背景自動監聽**：在手機上新增圖片後，外掛會自動於背景偵測、上傳至 R2，並自動改寫連結為公開 URL。
-- **本機清理支援**：手機版已完整支援「上傳後刪除本機圖片 (Delete local image after upload)」功能，上傳後可自動將圖檔移至中繼資料夾或垃圾桶。
-- **iCloud 同步緩衝**：強烈建議在使用 iCloud 等多裝置同步服務時，將清理模式設定為「移到檢查資料夾 (Move to review folder)」（例如 `_r2_media_review`）或「移到 Obsidian 垃圾桶 (Move to Obsidian trash)」，作為暫存中繼站。如此可避免因同步延遲導致桌機在連結改寫為 R2 網址前，出現「找不到本機圖檔」的問題。
+- **本機圖片後續處理**：手機版已完整支援「上傳後處理本機圖片 (Handle local image after upload)」功能。上傳並改寫連結後，可選擇將原本本機圖檔移至檢查資料夾或 Obsidian 垃圾桶。
+- **iCloud 同步緩衝**：強烈建議在使用 iCloud 等多裝置同步服務時，將處理方式設定為「移到檢查資料夾 (Move to review folder)」（例如 `_r2_media_review`）。這是安全暫存區，不會自動清空；確認其他裝置正常顯示 R2 圖片後，再從 Dashboard 清理。若選「移到 Obsidian 垃圾桶 (Move to Obsidian trash)」，圖片會直接移出 vault。
 - **UI 與效能限制**：手機端不建立桌面版的狀態列（status bar）。此外，為保障啟動速度，`Scan on startup` 在手機端會於執行時強制關閉。
 
 ## 安全預設
@@ -95,7 +95,7 @@ R2 Media Sync 已全面支援 Obsidian 手機版（Mobile）。
 R2 Media Sync 的預設值偏保守：
 
 - 預設不在啟動時掃描
-- 預設不上傳後刪除本機圖片
+- 預設不上傳後處理本機圖片
 - 可先對單篇筆記手動測試
 - 如果要清理本機檔案，`review folder` 模式比直接刪除更安全
 - 若筆記中仍殘留本機圖片連結，會略過本機清理
@@ -229,14 +229,14 @@ fab34/cloudflare-media-sync
 
 若要啟用，可選：
 
-- `Move to Obsidian trash`
-- `Move to review folder`
+- `Move to Obsidian trash`：把圖片移出 vault，交給 Obsidian 垃圾桶處理。
+- `Move to review folder`：把圖片移到 `_r2_media_review` 這類檢查資料夾，作為安全暫存。
 
-`review folder` 會把圖片移到像 `_r2_media_review` 這樣的資料夾，讓你先確認後再清理。
+`review folder` 不會自動清空。確認其他裝置都能正常顯示 R2 圖片後，再從 Dashboard 執行 `Clear review folder` 清理。
 
 ## 建議的第一次測試
 
-1. 保持 `Delete local image after upload` 關閉
+1. 保持 `Handle local image after upload` 關閉
 2. 保持 `Scan on startup` 關閉
 3. 打開一篇只含 1 到 2 張圖片的測試筆記
 4. 執行 `R2 Media Sync: Upload local images in current note`
@@ -245,7 +245,7 @@ fab34/cloudflare-media-sync
 
 ## 建議的手機端測試
 
-1. 保持 `Delete local image after upload` 關閉
+1. 保持 `Handle local image after upload` 關閉
 2. 保持 `Scan on startup` 關閉
 3. 在手機上插入一張測試圖片
 4. 等待圖片連結改寫成 R2 URL

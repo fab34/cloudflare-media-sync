@@ -70,8 +70,8 @@ In short:
 R2 Media Sync fully supports Obsidian mobile.
 
 - **Background Auto-monitoring**: Automatically detects newly inserted local images on mobile, uploads them to R2, and rewrites links to public URLs.
-- **Local Cleanup Support**: Supports `Delete local image after upload` on mobile. You can configure it to move files to the review folder or trash after upload.
-- **iCloud Sync Staging**: Recommended when using iCloud sync. Setting the local cleanup mode to "Move to review folder" (e.g. `_r2_media_review`) or "Move to Obsidian trash" keeps files local in a safe staging area until they sync, preventing missing image issues on desktop due to sync delay.
+- **Local Image Handling**: Supports `Handle local image after upload` on mobile. After upload and link rewrite, the original local file can be moved to a review folder or Obsidian trash.
+- **iCloud Sync Staging**: Recommended when using iCloud sync. Setting the handling mode to "Move to review folder" (e.g. `_r2_media_review`) keeps files in a safety staging area. Files there are not deleted automatically; clear them from the dashboard after confirming other devices render the R2 URLs correctly. "Move to Obsidian trash" removes the image from the vault through Obsidian's trash handling.
 - **UI Constraints**: The plugin does not create the desktop status bar on mobile. `Scan on startup` is always disabled at runtime on mobile to ensure fast app startup.
 
 ## Why
@@ -251,10 +251,10 @@ Local cleanup is disabled by default.
 
 When enabled, choose one cleanup mode:
 
-- `Move to Obsidian trash`: uses Obsidian's file trash handling.
-- `Move to review folder`: moves uploaded local files into a vault folder such as `_synced_media_trash`, preserving the original path under that folder so you can inspect before deleting.
+- `Move to Obsidian trash`: removes the image from the vault through Obsidian's trash handling.
+- `Move to review folder`: moves uploaded local files into a vault folder such as `_r2_media_review`, preserving the original path under that folder so you can inspect before deleting.
 
-Use `Clear local review folder` from the command palette when you are ready to move review-folder files to Obsidian trash.
+The review folder is not cleared automatically. Use `Clear local review folder` from the command palette or dashboard when you are ready to move review-folder files to Obsidian trash.
 
 ### Path Template
 
@@ -289,7 +289,7 @@ Recommended exclusions:
 
 ### Recommended First Run
 
-1. Keep `Delete local image after upload` disabled.
+1. Keep `Handle local image after upload` disabled.
 2. Keep `Scan on startup` disabled.
 3. Open a note with one or two local test images.
 4. Run `R2 Media Sync: Upload local images in current note`.
@@ -298,7 +298,7 @@ Recommended exclusions:
 
 ### Recommended Mobile Run
 
-1. Keep `Delete local image after upload` disabled.
+1. Keep `Handle local image after upload` disabled.
 2. Keep `Scan on startup` disabled.
 3. Insert one test image into a note on mobile.
 4. Wait for the local link to be rewritten to an R2 URL.
